@@ -7,8 +7,6 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6?style=flat-square&logo=typescript&logoColor=white)
 ![Monaco](https://img.shields.io/badge/Monaco_Editor-latest-purple?style=flat-square)
 ![Platform](https://img.shields.io/badge/platform-Windows-0078d4?style=flat-square&logo=windows&logoColor=white)
-![RAM](https://img.shields.io/badge/RAM-~10MB-green?style=flat-square)
-![EXE](https://img.shields.io/badge/EXE-~3MB-green?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-yellow?style=flat-square)
 
 ## Descripcion General
