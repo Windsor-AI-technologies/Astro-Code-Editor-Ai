@@ -1,0 +1,49 @@
+/* ─── Status Bar ─────────────────────────────────────────────────────── */
+.status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--statusbar-height);
+  background: transparent;
+  color: var(--text-primary);
+  padding: 0 10px;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.status-left,
+.status-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0 4px;
+  border-radius: 2px;
+  cursor: default;
+}
+
+.status-item:hover {
+  background: var(--bg-hover);
+}
+
+.status-sep {
+  opacity: 0.5;
+}
+
+.status-dirty {
+  color: var(--warning);
+}
+
+.status-saved {
+  color: var(--success);
+}
+
+.status-message {
+  color: var(--warning);
+  font-style: italic;
+}

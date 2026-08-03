@@ -1,0 +1,156 @@
+/* ─── Terminal Panel ─────────────────────────────────────────────────── */
+.terminal-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin: 0 6px 6px 6px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.terminal-resize-handle {
+  height: 3px;
+  background: transparent;
+  cursor: row-resize;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.terminal-resize-handle:hover {
+  background: var(--accent);
+}
+
+.terminal-header {
+  display: flex;
+  align-items: center;
+  height: 30px;
+  background: var(--bg-0);
+  border-bottom: 1px solid var(--border);
+  padding: 0 8px;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.terminal-header-left {
+  display: flex;
+  align-items: center;
+}
+
+.terminal-header-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.terminal-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  overflow-x: auto;
+  flex: 1;
+}
+
+.terminal-tab {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background 0.1s;
+  white-space: nowrap;
+}
+
+.terminal-tab:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.terminal-tab.active {
+  background: var(--bg-1);
+  color: var(--text-primary);
+}
+
+.terminal-tab-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  color: var(--text-dim);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+
+.terminal-tab:hover .terminal-tab-close {
+  opacity: 1;
+}
+
+.terminal-tab-close:hover {
+  background: var(--bg-3);
+  color: var(--text-primary);
+}
+
+.terminal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.terminal-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.terminal-action-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.terminal-body {
+  flex: 1;
+  overflow: hidden;
+  padding: 4px;
+  background: var(--bg-0);
+  user-select: text;
+  min-height: 0;
+  position: relative;
+}
+
+.terminal-instance {
+  position: absolute;
+  inset: 4px;
+  user-select: text;
+}
+
+/* xterm.js overrides */
+.terminal-instance .xterm {
+  height: 100%;
+  user-select: text;
+}
+
+.terminal-instance .xterm-viewport {
+  background: transparent !important;
+}
+
+.terminal-instance .xterm-screen {
+  user-select: text;
+}

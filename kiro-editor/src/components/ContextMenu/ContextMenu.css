@@ -1,0 +1,72 @@
+/* ─── Custom Context Menu with blur ──────────────────────────────────── */
+.ctx-menu {
+  position: fixed;
+  z-index: 9999;
+  min-width: 220px;
+  padding: 4px;
+  background: color-mix(in srgb, var(--bg-1) 70%, transparent);
+  backdrop-filter: blur(30px) saturate(0.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  animation: ctx-fade-in 0.12s ease-out;
+}
+
+@keyframes ctx-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.ctx-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 6px 12px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.08s;
+}
+
+.ctx-item:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.ctx-item.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ctx-label {
+  flex: 1;
+}
+
+.ctx-shortcut {
+  color: var(--text-dim);
+  font-size: 11px;
+  margin-left: 20px;
+}
+
+.ctx-item:hover .ctx-shortcut {
+  color: inherit;
+  opacity: 0.7;
+}
+
+.ctx-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 3px 4px;
+}

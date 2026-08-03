@@ -1,0 +1,29 @@
+[package]
+name = "astro-editor"
+version = "0.1.0"
+description = "Astro Code Editor - A fast code editor built with Tauri"
+authors = ["Jeshua"]
+edition = "2021"
+
+[lib]
+name = "astro_editor_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+tauri-plugin-dialog = "2"
+window-vibrancy = "0.6"
+dirs = "6"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+opt-level = "z"        # Optimizar para tamaño mínimo
+lto = true             # Link-Time Optimization (elimina código muerto)
+codegen-units = 1      # Mejor optimización (1 thread de compilación)
+strip = true           # Quitar símbolos de debug del binario
+panic = "abort"        # Menos código de manejo de panic

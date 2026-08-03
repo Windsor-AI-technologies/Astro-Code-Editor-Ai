@@ -1,0 +1,85 @@
+/* ─── Extensions Panel ────────────────────────────────────────────────── */
+.extensions-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.extensions-header {
+  display: flex;
+  align-items: center;
+  padding: 10px 10px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.extensions-title {
+  flex: 1;
+}
+
+.extensions-search {
+  padding: 4px 10px 8px;
+  flex-shrink: 0;
+}
+
+.extensions-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.extensions-search-icon {
+  position: absolute;
+  left: 8px;
+  color: var(--text-dim);
+  pointer-events: none;
+}
+
+.extensions-input {
+  width: 100%;
+  background: var(--bg-0);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 12px;
+  padding: 4px 8px 4px 26px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.extensions-input:focus {
+  border-color: var(--accent);
+}
+
+.extensions-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.extensions-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+}
+
+.extensions-placeholder-icon {
+  color: var(--text-primary);
+  opacity: 0.6;
+}
+
+.extensions-placeholder-text {
+  color: var(--text-secondary);
+  font-size: 12px;
+  margin: 0;
+  line-height: 1.5;
+}

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>xterm.js Test</title>
+  <link rel="stylesheet" href="./node_modules/@xterm/xterm/css/xterm.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #1e1e1e;
+      color: #ccc;
+      font-family: sans-serif;
+    }
+    h1 {
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+    #terminal-container {
+      width: 100%;
+      height: 400px;
+    }
+    #status {
+      margin-top: 10px;
+      padding: 8px;
+      background: #2d2d2d;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <h1>xterm.js Tauri Webview Test</h1>
+  <div id="terminal-container"></div>
+  <div id="status">Loading...</div>
+
+  <script type="module">
+    import { Terminal } from './node_modules/@xterm/xterm/lib/xterm.mjs';
+    import { FitAddon } from './node_modules/@xterm/addon-fit/lib/addon-fit.mjs';
+
+    const statusEl = document.getElementById('status');
+
+    try {
+      const term = new Terminal({
+        cursorBlink: true,
+        fontSize: 14,
+        fontFamily: 'Consolas, "Courier New", monospace',
+        theme: {
+          background: '#1e1e1e',
+          foreground: '#d4d4d4',
+          cursor: '#d4d4d4',
+        }
+      });
+
+      const fitAddon = new FitAddon();
+      term.loadAddon(fitAddon);
+
+      const container = document.getElementById('terminal-container');
+      term.open(container);
+      fitAddon.fit();
+
+      // Write welcome message
+      term.writeln('\x1b[1;32mHello from xterm!\x1b[0m');
+      term.writeln('');
+      term.writeln('Terminal is working. Type anything to test echo:');
+      term.writeln('');
+      term.write('$ ');
+
+      // Echo back typed characters
+      let currentLine = '';
+      term.onData((data) => {
+        if (data === '\r') {
+          // Enter pressed
+          term.writeln('');
+          if (currentLine.trim()) {
+            term.writeln(`  echo: ${currentLine}`);
+          }
+          currentLine = '';
+          term.write('$ ');
+        } else if (data === '\x7f') {
+          // Backspace
+          if (currentLine.length > 0) {
+            currentLine = currentLine.slice(0, -1);
+            term.write('\b \b');
+          }
+        } else if (data >= ' ') {
+          // Printable characters
+          currentLine += data;
+          term.write(data);
+        }
+      });
+
+      // Handle resize
+      window.addEventListener('resize', () => {
+        fitAddon.fit();
+      });
+
+      statusEl.textContent = `Status: OK | Terminal rows: ${term.rows}, cols: ${term.cols}`;
+      statusEl.style.color = '#4ec9b0';
+
+    } catch (err) {
+      statusEl.textContent = `Error: ${err.message}`;
+      statusEl.style.color = '#f44747';
+      console.error('xterm init failed:', err);
+    }
+  </script>
+</body>
+</html>

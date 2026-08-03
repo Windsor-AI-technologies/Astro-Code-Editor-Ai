@@ -1,0 +1,213 @@
+/* ─── Titlebar con menú + Activity Bar ───────────────────────────────── */
+.titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 38px;
+  background: transparent;
+
+  padding: 0 12px;
+  flex-shrink: 0;
+  z-index: 100;
+  -webkit-app-region: drag;
+}
+
+.titlebar-left {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex: 1;
+  -webkit-app-region: no-drag;
+}
+
+.titlebar-icon {
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.titlebar-center {
+  max-width: 500px;
+  min-width: 480px;
+  margin-left: 80px;
+  text-align: center;
+  background-color: var(--bg-2);
+  border: 1px solid var(--border);
+  padding: 4px 16px;
+  border-radius: 5px;
+  font-size: 11px;
+  color: var(--text-primary);
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-app-region: no-drag;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.titlebar-center:hover {
+  background-color: var(--bg-3);
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.titlebar-right {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  justify-content: flex-end;
+  padding-right: 8px;
+  -webkit-app-region: no-drag;
+}
+
+.titlebar-buttons {
+  display: flex;
+  height: 100%;
+  -webkit-app-region: no-drag;
+}
+
+/* ─── macOS Traffic Light Buttons ─────────────────────────────────── */
+.macos-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 12px;
+  -webkit-app-region: no-drag;
+}
+
+.traffic-light {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: filter 0.15s;
+}
+
+.traffic-light svg {
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.macos-buttons:hover .traffic-light svg {
+  opacity: 1;
+}
+
+.traffic-close {
+  background: #ff5f57;
+}
+
+.traffic-close svg {
+  color: #4a0002;
+}
+
+.traffic-minimize {
+  background: #febc2e;
+}
+
+.traffic-minimize svg {
+  color: #5f4a00;
+}
+
+.traffic-maximize {
+  background: #28c840;
+}
+
+.traffic-maximize svg {
+  color: #004a00;
+}
+
+.traffic-light:hover {
+  filter: brightness(1.1);
+}
+
+.traffic-light:active {
+  filter: brightness(0.85);
+}
+
+.menu-item-wrapper {
+  position: relative;
+}
+
+.menu-item {
+  padding: 4px 8px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 12px;
+  -webkit-app-region: no-drag;
+}
+
+.menu-item:hover,
+.menu-item.active {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.menu-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 2px;
+  min-width: 220px;
+  background: color-mix(in srgb, var(--bg-2) 85%, transparent);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 4px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  z-index: 200;
+  backdrop-filter: blur(50px) saturate(1.5);
+  -webkit-backdrop-filter: blur(50px) saturate(1.5);
+}
+
+.menu-dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 5px 10px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.menu-dropdown-item:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.menu-dropdown-item.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.menu-dropdown-label {
+  flex: 1;
+}
+
+.menu-dropdown-shortcut {
+  color: var(--text-dim);
+  font-size: 11px;
+  margin-left: 16px;
+}
+
+.menu-dropdown-item:hover .menu-dropdown-shortcut {
+  color: inherit;
+  opacity: 0.7;
+}
+
+.menu-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 3px 4px;
+}
