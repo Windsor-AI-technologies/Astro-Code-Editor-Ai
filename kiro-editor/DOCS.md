@@ -256,37 +256,246 @@ Resultado: **~3 MB** el ejecutable, **~1.75 MB** el instalador MSI.
 
 ## Componentes Principales
 
-### TitleBar
-- Botones de ventana estilo macOS (traffic lights) configurables izquierda/derecha
-- Menu dropdown con blur (File, Edit, Selection, View, Terminal, Help)
-- Center clickeable que abre la EditorCommandPalette
-- Icono SVG de universo/galaxia
+### App.tsx — Componente Raiz
 
-### CodeEditor
-- Wrapper de Monaco con opciones agresivas de IntelliSense
-- Context menu custom con blur (reemplaza el nativo de Monaco)
-- Paleta de comandos custom con blur (F1)
-- Auto-completado: snippets + keywords + built-ins + document words
-- Soporte JSX/TSX con configuracion de compilador TS
+El cerebro de la aplicacion. Controla todo el estado global y el layout.
 
-### EditorCommandPalette
-- Se renderiza como portal al `<body>` (fuera del DOM del editor)
-- Backdrop-filter blur funcional
-- Lista todas las acciones de Monaco + acciones custom
-- Busqueda fuzzy, navegacion con flechas, Enter para ejecutar
-- No bloquea scroll del editor de fondo
-- Se cierra con click fuera o Escape
+**States principales:**
 
-### ContextMenu
-- Reemplaza el context menu nativo de Monaco (que no soporta blur)
-- Portal al `<body>` para que backdrop-filter funcione
-- Opciones: Go to Definition, References, Rename, Format, Cut/Copy/Paste
+| State | Tipo | Funcion |
+|-------|------|---------|
+| `rootPath` | `string \| null` | Ruta de la carpeta abierta |
+| `tree` | `FileEntry[]` | Arbol de archivos del explorador |
+| `tabs` | `Tab[]` | Pestañas abiertas |
+| `activeTabId` | `string \| null` | Tab activa |
+| `settings` | `AppSettings` | Configuracion completa del editor |
+| `terminalVisible` | `boolean` | Visibilidad de la terminal |
+| `aiPanelVisible` | `boolean` | Visibilidad del panel IA |
+| `activeView` | `string` | Vista activa del sidebar (files, git, debug...) |
+| `sidebarVisible` | `boolean` | Sidebar visible o colapsado |
+| `editorCmdPaletteOpen` | `boolean` | Paleta de comandos abierta |
 
-### AIPanel (Astro Quasar)
-- Animacion de entrada tipo "cohete chocando con agujero negro"
-- Modos: Engineer, Ask, Plan
-- Modelos: GPT-4o, Claude 4 Sonnet/Opus, Gemini, DeepSeek, Ollama local
-- Fade-in escalonado de elementos
+**Funciones principales:**
+
+| Funcion | Que hace |
+|---------|----------|
+| `handleOpenFolder()` | Abre carpeta, guarda workspace, carga arbol |
+| `handleOpenFile()` | Abre archivo en nueva tab (o activa si ya existe) |
+| `handleSave()` | Guarda archivo actual (con formatOnSave) |
+| `handleNewFile()` | Crea tab sin-titulo |
+| `handleCloseTab()` | Cierra tab (pide confirmacion si dirty) |
+| `handleEditorChange()` | Marca tab como dirty al editar |
+| `refreshTree()` | Recarga el arbol de archivos |
+
+**Auto-save (afterDelay):**
+
+```typescript
+// Se ejecuta 500ms despues del ultimo cambio
+useEffect(() => {
+  const dirtyTabs = tabs.filter(t => t.isDirty && t.path);
+  if (dirtyTabs.length === 0) return;
+  // Timeout se resetea en cada cambio
+  autoSaveTimerRef.current = setTimeout(async () => {
+    // Guarda todos los tabs dirty
+  }, 500);
+}, [tabs, activeTabId]);
+```
+
+**Layout (orden de render):**
+
+```tsx
+<div class="app">
+  <TitleBar />              ← Full width, arriba de todo
+  <div class="app-body">   ← Flex row
+    <ActivityBar />         ← Iconos laterales
+    <AIPanel left? />       ← Panel IA (si posicion=left)
+    <Sidebar />             ← Explorador/Git/Debug/etc
+    <div class="main-column">
+      <TabBar />            ← Pestañas
+      <CodeEditor />        ← Monaco Editor
+    </div>
+    <Sidebar right? />      ← (si posicion=right)
+    <AIPanel right? />      ← Panel IA (si posicion=right)
+  </div>
+  <TerminalPanel />         ← Terminal abajo
+  <StatusBar />             ← Barra inferior
+  <CommandPalette />        ← Modal temas
+  <EditorCommandPalette />  ← Modal comandos (portal a body)
+</div>
+```
+
+---
+
+### CodeEditor.tsx — Editor de Codigo
+
+Wrapper de Monaco Editor con IntelliSense mejorado.
+
+**Responsabilidades:**
+- Configura Monaco (TypeScript compiler, temas, snippets, keywords)
+- Maneja context menu custom (click derecho)
+- Paleta de comandos interna (F1)
+- Sincroniza lenguaje del tab con el modelo de Monaco
+- Muestra pantalla de bienvenida cuando no hay tab abierto
+
+**handleBeforeMount** — Se ejecuta ANTES de montar Monaco:
+```typescript
+// 1. Registra todos los temas en Monaco
+registerAllMonacoThemes(monaco);
+// 2. Configura TypeScript compiler (JSX, ESNext, etc.)
+tsDefaults.setCompilerOptions({...});
+// 3. Registra snippets para 14 lenguajes
+registerCompletionProviders(monaco);
+// 4. Registra keywords y built-ins
+registerLanguageKeywords(monaco);
+```
+
+**handleMount** — Se ejecuta al montar el editor:
+```typescript
+// 1. Guarda referencia al editor
+editorRef.current = editor;
+// 2. Registra atajos (Ctrl+S, Shift+Alt+F, Ctrl+K, F1)
+// 3. Conecta context menu custom
+editor.onContextMenu((e) => {
+  setCtxMenu({ x: e.event.posx, y: e.event.posy });
+});
+```
+
+**Opciones de Monaco (highlights):**
+- `quickSuggestionsDelay: 10` — IntelliSense casi instantaneo
+- `suggestSelection: 'recentlyUsedByPrefix'` — Prioriza lo que mas usas
+- `linkedEditing: true` — Editar tag HTML cambia ambos
+- `bracketPairColorization` — Colores en brackets
+- `stickyScroll: false` — Desactivado para ahorrar RAM
+- `fixedOverflowWidgets: true` — Widgets fuera del overflow
+
+---
+
+### themes.ts — Sistema de Temas
+
+**Interfaces:**
+```typescript
+// Estructura tipada por categoria (para API futura)
+interface ThemeColors {
+  'base.background': string;
+  'editor.background': string;
+  'sidebar.background': string;
+  'tab.activeBackground': string;
+  // ...40+ tokens
+}
+
+// Definicion completa de un tema
+interface ThemeDefinition {
+  id: string;
+  name: string;
+  base: 'vs-dark' | 'vs' | 'hc-black';
+  colors?: ThemeColors;        // Tipado (nuevo)
+  vars: Record<string, string>; // CSS vars (retrocompatible)
+  monaco: IStandaloneThemeData; // Colores Monaco
+}
+```
+
+**Funciones:**
+- `colorsToVars(colors)` — Convierte ThemeColors → CSS variables
+- `applyTheme(id)` — Aplica CSS vars al `:root`
+- `registerAllMonacoThemes(monaco)` — Registra todos los temas en Monaco
+- `getTerminalColors(id)` — Colores para xterm.js
+- `mkTheme(base, colors, rules)` — Helper que agrega widget/menu colors automaticamente
+
+---
+
+### completions.ts — IntelliSense (Snippets + Keywords)
+
+**registerCompletionProviders(monaco):**
+- Registra snippets para: JS/TS, HTML, CSS, Python, Rust, Go, Java, C/C++, PHP, Ruby, SQL, Shell, Kotlin, Swift, Dart
+- Cada snippet tiene: prefix (trigger), label (descripcion), body (template con $1, $2, $0)
+
+**registerLanguageKeywords(monaco):**
+- Registra keywords del lenguaje (aparecen como tipo Keyword)
+- Registra built-ins/funciones comunes (aparecen como tipo Function)
+- Escanea el documento actual y propone variables/funciones definidas por el usuario (tipo Variable)
+
+```typescript
+// El provider escanea palabras del documento actual
+const text = model.getValue();
+const wordPattern = /\b[a-zA-Z_]\w{2,}\b/g;
+// Las ofrece como sugerencias con prioridad alta
+```
+
+---
+
+### lsp.rs — Language Server Protocol (Backend Rust)
+
+**LspManager:**
+- Mantiene un `HashMap<String, LspProcess>` de servers activos
+- Cada `LspProcess` tiene stdin/stdout separados para comunicacion JSON-RPC
+
+**Flujo de inicializacion:**
+```
+1. spawn proceso (pyright-langserver --stdio)
+2. send "initialize" request con capabilities
+3. read response (skipea notificaciones)
+4. send "initialized" notification
+5. Listo para requests
+```
+
+**Servers configurados (13):**
+- typescript-language-server, pyright-langserver, rust-analyzer
+- gopls, clangd, jdtls, intelephense, solargraph
+- kotlin-language-server, dart language-server
+- css-languageserver, html-languageserver, vscode-json-languageserver
+
+**Estado actual:** Desactivado en frontend. La comunicacion es bloqueante (synchronous I/O). Necesita migrarse a async con tokio para no congelar la UI.
+
+---
+
+### TitleBar.tsx — Barra de Titulo
+
+**Elementos:**
+- Traffic lights macOS (cerrar/minimizar/maximizar) — posicion configurable
+- Menu dropdown (File, Edit, Selection, View, Terminal, Help) con blur
+- Center clickeable → abre EditorCommandPalette
+- SVG universo/galaxia como icono de la app
+
+**Traffic lights:**
+```tsx
+// Se posicionan segun prop trafficLightPosition
+{trafficLightPosition === 'left' && trafficLights}
+// ... menus ...
+{trafficLightPosition === 'right' && trafficLights}
+```
+
+---
+
+### EditorCommandPalette.tsx — Paleta de Comandos
+
+**Caracteristicas:**
+- Se renderiza como `createPortal(... , document.body)` — fuera del DOM del editor
+- `backdrop-filter: blur(24px)` funcional (porque esta fuera del overflow:hidden)
+- Lista todas las acciones de Monaco + acciones custom (formatear, buscar, undo, etc.)
+- Busqueda fuzzy por label o id
+- Navegacion: flechas arriba/abajo + Enter
+- Se cierra: Escape o click fuera (mousedown listener global)
+- No bloquea scroll del editor (overlay con pointer-events: none)
+
+---
+
+### ContextMenu.tsx — Menu Contextual Custom
+
+**Por que existe:**
+Monaco renderiza su context menu dentro del DOM del editor (overflow:hidden), lo que impide usar backdrop-filter blur. Este componente:
+1. Desactiva el context menu nativo de Monaco (`contextmenu: false`)
+2. Escucha `editor.onContextMenu` para capturar posicion
+3. Renderiza un portal al `<body>` con blur funcional
+
+**Opciones del menu:**
+- Ir a definicion (Ctrl+F12)
+- Ir a referencias (Shift+F12)
+- Ir a simbolo (Ctrl+Shift+O)
+- Renombrar (F2)
+- Cambiar ocurrencias (Ctrl+F2)
+- Formatear documento
+- Cortar / Copiar / Pegar
+- Paleta de comandos (F1)
 
 ---
 
