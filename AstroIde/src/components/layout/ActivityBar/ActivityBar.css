@@ -1,0 +1,96 @@
+/* ─── Activity Bar (vertical, izquierda) ──────────────────────────────── */
+.activity-bar {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  width: 40px;
+  background: transparent;
+  padding: 8px 0;
+  flex-shrink: 0;
+}
+
+.activity-top,
+.activity-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+}
+
+.activity-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s, background 0.2s, transform 0.2s;
+}
+
+.activity-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+  transform: scale(1.1);
+}
+
+/* Click animation — burbuja */
+.activity-btn:active {
+  transform: scale(0.88);
+  transition: transform 0.08s;
+
+}
+
+.activity-btn.active {
+  color: var(--text-primary);
+    background-color: var(--bg-0);
+  animation: activityPop 0.3s ease-out;
+}
+
+/* Barra lateral accent */
+.activity-btn.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 25%;
+  bottom: 25%;
+  width: 3px;
+  background: var(--accent);
+  border-radius: 0 2px 2px 0;
+  animation: barSlideIn 0.25s ease-out;
+  
+}
+
+/* Animación burbuja al activar */
+@keyframes activityPop {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Barra desliza desde arriba */
+@keyframes barSlideIn {
+  0% {
+    top: 50%;
+    bottom: 50%;
+    opacity: 0;
+  }
+  100% {
+    top: 25%;
+    bottom: 25%;
+    opacity: 1;
+  }
+}

@@ -22,6 +22,21 @@ impl TerminalState {
     }
 }
 
+/// Mata un proceso de terminal y espera a que termine para liberar recursos.
+/// El drop de stdin cierra el pipe, lo que hace que los threads de lectura terminen.
+fn kill_terminal_instance(mut term: TerminalInstance) {
+    // Dropear stdin primero - cierra el pipe de entrada,
+    // lo que causa que el proceso hijo detecte EOF y sus stdout/stderr se cierren.
+    drop(term.stdin);
+
+    // Matar el proceso
+    let _ = term.child.kill();
+
+    // Esperar a que termine - esto garantiza que los pipes stdout/stderr se cierren
+    // y los threads de lectura terminen al recibir EOF.
+    let _ = term.child.wait();
+}
+
 #[tauri::command]
 pub fn spawn_terminal(
     state: tauri::State<'_, Arc<TerminalState>>,
@@ -77,6 +92,7 @@ pub fn spawn_terminal(
                 Err(_) => break,
             }
         }
+        // Thread termina cuando el pipe se cierra (proceso muerto)
     });
 
     // Thread para stderr
@@ -93,6 +109,7 @@ pub fn spawn_terminal(
             }
         }
         let _ = app.emit(&format!("terminal-exit-{}", id), "closed");
+        // Thread termina cuando el pipe se cierra (proceso muerto)
     });
 
     Ok(())
@@ -131,8 +148,24 @@ pub fn kill_terminal(
     id: u32,
 ) -> Result<(), String> {
     let mut terminals = state.terminals.lock().unwrap();
-    if let Some(mut term) = terminals.remove(&id) {
-        let _ = term.child.kill();
+    if let Some(term) = terminals.remove(&id) {
+        kill_terminal_instance(term);
+    }
+    Ok(())
+}
+
+/// Mata todas las terminales - usar al cambiar de proyecto para liberar toda la memoria
+#[tauri::command]
+pub fn kill_all_terminals(
+    state: tauri::State<'_, Arc<TerminalState>>,
+) -> Result<(), String> {
+    let mut terminals = state.terminals.lock().unwrap();
+    let all: Vec<(u32, TerminalInstance)> = terminals.drain().collect();
+    // Liberar el lock antes de matar (wait puede ser lento)
+    drop(terminals);
+
+    for (_id, term) in all {
+        kill_terminal_instance(term);
     }
     Ok(())
 }

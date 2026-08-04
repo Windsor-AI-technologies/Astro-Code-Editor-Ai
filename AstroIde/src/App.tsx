@@ -1,25 +1,33 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { invoke } from '@tauri-apps/api/core';
 import type * as Monaco from 'monaco-editor';
 import type { FileEntry, Tab, AppSettings } from './types';
 import { DEFAULT_SETTINGS, settingsToEditorOptions } from './types';
 import { getLanguageFromPath } from './utils/language';
 import { applyTheme, getTerminalColors } from './themes';
-import TitleBar from './components/TitleBar/TitleBar';
-import ActivityBar from './components/ActivityBar/ActivityBar';
-import FileExplorer from './components/FileExplorer/FileExplorer';
-import SearchPanel from './components/SearchPanel/SearchPanel';
-import GitPanel from './components/GitPanel/GitPanel';
-import DebugPanel from './components/DebugPanel/DebugPanel';
-import ExtensionsPanel from './components/ExtensionsPanel/ExtensionsPanel';
-import TabBar from './components/TabBar/TabBar';
-import CodeEditor from './components/CodeEditor/CodeEditor';
-import StatusBar from './components/StatusBar/StatusBar';
-import SettingsPanel from './components/SettingsPanel/SettingsPanel';
-import TerminalPanel from './components/Terminal/TerminalPanel';
-import AIPanel from './components/AIPanel/AIPanel';
-import CommandPalette from './components/CommandPalette/CommandPalette';
-import EditorCommandPalette from './components/EditorCommandPalette/EditorCommandPalette';
+import { disposeAllCompletionProviders } from './utils/completions';
+import { clearDocumentVersions } from './services/lsp-monaco-bridge';
+import { loader } from '@monaco-editor/react';
+import * as api from './services/tauri';
+import { useAutoSave } from './hooks/useAutoSave';
+import { useKeyboard } from './hooks/useKeyboard';
+import { useResize } from './hooks/useResize';
+import TitleBar from './components/layout/TitleBar/TitleBar';
+import ActivityBar from './components/layout/ActivityBar/ActivityBar';
+import FileExplorer from './features/explorer/FileExplorer/FileExplorer';
+import SearchPanel from './features/search/SearchPanel/SearchPanel';
+import Contenedores from './features/cloud/Cloude/cloude';
+import GitPanel from './features/git/GitPanel/GitPanel';
+import DebugPanel from './features/debug/DebugPanel/DebugPanel';
+import ExtensionsPanel from './features/extensions/ExtensionsPanel/ExtensionsPanel';
+import TabBar from './features/editor/TabBar/TabBar';
+import CodeEditor from './features/editor/CodeEditor/CodeEditor';
+import StatusBar from './components/layout/StatusBar/StatusBar';
+import SettingsPanel from './features/settings/SettingsPanel/SettingsPanel';
+import TerminalPanel from './features/terminal/Terminal/TerminalPanel';
+import type { TerminalPanelHandle } from './features/terminal/Terminal/TerminalPanel';
+import AIPanel from './features/ai/AIPanel/AIPanel';
+import CommandPalette from './components/ui/CommandPalette/CommandPalette';
+import EditorCommandPalette from './features/editor/EditorCommandPalette/EditorCommandPalette';
 
 let tabIdCounter = 0;
 function newTabId() { return `tab-${++tabIdCounter}`; }
@@ -41,16 +49,15 @@ export default function App() {
   const [activeView, setActiveView] = useState('files');
   const [cmdPaletteOpen, setCmdPaletteOpen] = useState(false);
   const [editorCmdPaletteOpen, setEditorCmdPaletteOpen] = useState(false);
-  const ctrlKRef = useRef(false);
+  const [sidebarVisible, setSidebarVisible] = useState(true);
 
   // Re-layout Monaco cuando el panel de IA cambia
   useEffect(() => {
     setTimeout(() => editorRef.current?.layout(), 100);
   }, [aiPanelVisible, settings['workbench.aiPanelWidth']]);
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
-  const resizingRef = useRef(false);
-  const termResizingRef = useRef(false);
-  const aiResizingRef = useRef(false);
+  const terminalPanelRef = useRef<TerminalPanelHandle>(null);
+  const dirtySetRef = useRef(new Set<string>());
 
   const activeTab = tabs.find(t => t.id === activeTabId) ?? null;
   const sidebarWidth = settings['workbench.sidebarWidth'];
@@ -59,7 +66,7 @@ export default function App() {
 
   // ── Cargar settings desde disco al inicio ─────────────────────────────
   useEffect(() => {
-    invoke<string>('load_settings')
+    api.loadSettings()
       .then(json => {
         try {
           const parsed = JSON.parse(json);
@@ -69,7 +76,7 @@ export default function App() {
       .catch(() => {/* usa defaults */ });
 
     // Restaurar último workspace abierto
-    invoke<string>('load_workspace')
+    api.loadWorkspace()
       .then(path => { if (path) handleOpenFolder(path); })
       .catch(() => {});
   }, []);
@@ -91,7 +98,7 @@ export default function App() {
   const refreshTree = useCallback(async (path?: string) => {
     const target = path ?? rootPath;
     if (!target) return;
-    const entries = await invoke<FileEntry[]>('read_dir', { path: target });
+    const entries = await api.readDir(target);
     setTree(entries);
   }, [rootPath]);
 
@@ -99,12 +106,36 @@ export default function App() {
 
   // ── Abrir carpeta ─────────────────────────────────────────────────────
   async function handleOpenFolder(path: string) {
-    setRootPath(path);
+    // Limpiar estado anterior (liberar memoria)
+    setTabs([]);
+    setActiveTabId(null);
     setTree([]);
-    const entries = await invoke<FileEntry[]>('read_dir', { path });
+    setSettingsOpen(false);
+    setTerminalVisible(false);
+
+    // Matar todas las terminales anteriores
+    terminalPanelRef.current?.killAll();
+
+    // Disponer modelos de Monaco del proyecto anterior (libera contenido de archivos en memoria)
+    try {
+      const monaco = await loader.init();
+      monaco.editor.getModels().forEach(model => model.dispose());
+    } catch { /* Monaco aún no inicializado, nada que limpiar */ }
+    editorRef.current = null;
+
+    // Limpiar providers de completado y LSP state
+    disposeAllCompletionProviders();
+    clearDocumentVersions();
+
+    // Dar un tick para que React libere los componentes anteriores
+    await new Promise(r => setTimeout(r, 10));
+
+    // Cargar nueva carpeta
+    setRootPath(path);
+    const entries = await api.readDir(path);
     setTree(entries);
     // Persistir workspace
-    invoke('save_workspace', { path }).catch(() => {});
+    api.saveWorkspace(path).catch(() => {});
   }
 
   // ── Abrir archivo ─────────────────────────────────────────────────────
@@ -112,7 +143,7 @@ export default function App() {
     const existing = tabs.find(t => t.path === path);
     if (existing) { setActiveTabId(existing.id); setSettingsOpen(false); return; }
     try {
-      const content = await invoke<string>('read_file', { path });
+      const content = await api.readFile(path);
       const name = path.split(/[\\/]/).pop() ?? path;
       const language = getLanguageFromPath(path);
       const tab: Tab = { id: newTabId(), path, name, content, language, isDirty: false };
@@ -137,21 +168,20 @@ export default function App() {
   const handleSave = useCallback(async () => {
     if (settingsOpen) {
       try {
-        await invoke('save_settings', { json: JSON.stringify(settings, null, 2) });
+        await api.saveSettings(JSON.stringify(settings, null, 2));
         showMessage('Configuración guardada');
       } catch (e) { showMessage(`Error: ${e}`); }
       return;
     }
     if (!activeTab) return;
 
-    // Obtener contenido actual directamente del editor (más confiable que el state)
     const currentContent = editorRef.current?.getValue() ?? activeTab.content;
 
     if (!activeTab.path) {
       const name = prompt('Nombre del archivo:', activeTab.name);
       if (!name) return;
       const basePath = rootPath ? `${rootPath}/${name}` : name;
-      await invoke('write_file', { path: basePath, content: currentContent });
+      await api.writeFile(basePath, currentContent);
       setTabs(prev => prev.map(t =>
         t.id === activeTab.id
           ? { ...t, path: basePath, name, content: currentContent, language: getLanguageFromPath(basePath), isDirty: false }
@@ -162,45 +192,24 @@ export default function App() {
       return;
     }
 
-    // Format on save
     if (settings['editor.formatOnSave'] && editorRef.current) {
       await editorRef.current.getAction('editor.action.formatDocument')?.run();
     }
 
-    // Leer contenido final (puede haber cambiado con format on save)
     const finalContent = editorRef.current?.getValue() ?? currentContent;
 
     try {
-      await invoke('write_file', { path: activeTab.path, content: finalContent });
+      await api.writeFile(activeTab.path, finalContent);
+      dirtySetRef.current.delete(activeTab.id);
       setTabs(prev => prev.map(t => t.id === activeTab.id ? { ...t, content: finalContent, isDirty: false } : t));
       showMessage('Guardado');
     } catch (e) { showMessage(`Error al guardar: ${e}`); }
   }, [activeTab, rootPath, refreshTree, settings, settingsOpen]);
 
-  // ── Auto-save: guarda archivos dirty 500ms después del último cambio ──
-  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    const dirtyTabs = tabs.filter(t => t.isDirty && t.path);
-    if (dirtyTabs.length === 0) return;
-
-    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-    autoSaveTimerRef.current = setTimeout(async () => {
-      const editor = editorRef.current;
-      for (const tab of dirtyTabs) {
-        const content = (activeTabId === tab.id && editor)
-          ? editor.getValue()
-          : tab.content;
-        try {
-          await invoke('write_file', { path: tab.path, content });
-          setTabs(prev => prev.map(t => t.id === tab.id ? { ...t, content, isDirty: false } : t));
-        } catch { /* silencioso */ }
-      }
-    }, 500);
-
-    return () => {
-      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-    };
-  }, [tabs, activeTabId]);
+  // ── Auto-save ──────────────────────────────────────────────────────────
+  const { cancelAutoSave } = useAutoSave({
+    tabs, activeTabId, editorRef, dirtySetRef, setTabs
+  });
 
   // ── Cerrar tab ────────────────────────────────────────────────────────
   function handleCloseTab(id: string) {
@@ -213,13 +222,22 @@ export default function App() {
       const next = newTabs[idx] ?? newTabs[idx - 1] ?? null;
       setActiveTabId(next?.id ?? null);
     }
+    if (!newTabs.some(t => t.isDirty && t.path)) {
+      cancelAutoSave();
+    }
   }
 
   // ── Cambios del editor ────────────────────────────────────────────────
-  function handleEditorChange(value: string) {
-    setTabs(prev => prev.map(t =>
-      t.id === activeTabId ? { ...t, content: value, isDirty: true } : t
-    ));
+  function handleEditorChange(_value: string) {
+    // No hacer setState aquí — evita re-render que causa que Monaco salte al fondo.
+    // Marcamos dirty vía ref y sincronizamos con un debounce mínimo.
+    if (activeTabId && !dirtySetRef.current.has(activeTabId)) {
+      dirtySetRef.current.add(activeTabId);
+      // Actualizar state una sola vez (la primera tecla del cambio)
+      setTabs(prev => prev.map(t =>
+        t.id === activeTabId ? (t.isDirty ? t : { ...t, isDirty: true }) : t
+      ));
+    }
   }
 
   function handleLanguageChange(lang: string) {
@@ -239,90 +257,45 @@ export default function App() {
   }, [activeTabId, editorRef.current]);
 
   // ── Atajos globales ───────────────────────────────────────────────────
-  useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
-      const mod = e.ctrlKey || e.metaKey;
-      // Bloquear DevTools (desactivar para debug si es necesario)
-      // if (e.key === 'F12') { e.preventDefault(); return; }
-      // if (mod && e.shiftKey && e.key === 'I') { e.preventDefault(); return; }
-      // if (mod && e.shiftKey && e.key === 'J') { e.preventDefault(); return; }
-      // if (mod && e.key === 'u') { e.preventDefault(); return; }
+  useKeyboard({
+    onSave: handleSave,
+    onToggleSidebar: () => setSidebarVisible(v => !v),
+    onCloseTab: () => { if (activeTabId) handleCloseTab(activeTabId); },
+    onToggleSettings: () => setSettingsOpen(v => !v),
+    onToggleTerminal: () => setTerminalVisible(v => !v),
+    onToggleAI: () => setAiPanelVisible(v => !v),
+    onCommandPalette: () => setCmdPaletteOpen(true),
+  });
 
-      if (mod && e.key === 's') { e.preventDefault(); handleSave(); }
-      if (mod && e.key === 'b') { e.preventDefault(); setSidebarVisibleToggle(); }
-      if (mod && e.key === 'w') { e.preventDefault(); if (activeTabId) handleCloseTab(activeTabId); }
-      if (mod && e.key === ',') { e.preventDefault(); setSettingsOpen(v => !v); }
-      if (e.key === '`' && mod) { e.preventDefault(); setTerminalVisible(v => !v); }
-      if (mod && e.shiftKey && e.key === 'A') { e.preventDefault(); setAiPanelVisible(v => !v); }
-      // Ctrl+K → espera segunda tecla
-      if (mod && e.key === 'k') { e.preventDefault(); ctrlKRef.current = true; setTimeout(() => { ctrlKRef.current = false; }, 1500); return; }
-      // Segunda tecla T después de Ctrl+K
-      if (ctrlKRef.current && (e.key === 't' || e.key === 'T')) { e.preventDefault(); ctrlKRef.current = false; setCmdPaletteOpen(true); return; }
-      if (ctrlKRef.current && e.key !== 'Control') { ctrlKRef.current = false; }
-    }
-    function onEditorSave() { handleSave(); }
-    window.addEventListener('keydown', onKeyDown);
-    document.addEventListener('editor-save', onEditorSave);
-    return () => { window.removeEventListener('keydown', onKeyDown); document.removeEventListener('editor-save', onEditorSave); };
-  }, [handleSave, activeTabId]);
-
-  const [sidebarVisible, setSidebarVisible] = useState(true);
-  function setSidebarVisibleToggle() { setSidebarVisible(v => !v); }
-
-  // ── Resize sidebar ────────────────────────────────────────────────────
-  function onResizeStart(e: React.MouseEvent) {
-    e.preventDefault();
-    resizingRef.current = true;
-    const startX = e.clientX;
-    const startW = sidebarWidth;
-    const isLeft = sidebarLeft;
-    function onMove(ev: MouseEvent) {
-      if (!resizingRef.current) return;
-      const delta = isLeft ? ev.clientX - startX : startX - ev.clientX;
-      setSettings(s => ({ ...s, 'workbench.sidebarWidth': Math.max(140, Math.min(500, startW + delta)) }));
-    }
-    function onUp() { resizingRef.current = false; window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); }
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-  }
+  // ── Resize handlers ────────────────────────────────────────────────────
+  const onResizeStart = useResize(
+    'x',
+    () => sidebarWidth,
+    (w) => setSettings(s => ({ ...s, 'workbench.sidebarWidth': w })),
+    140, 500,
+    !sidebarLeft
+  );
 
   // ── Actions ───────────────────────────────────────────────────────────
   function handleUndo() { editorRef.current?.trigger('keyboard', 'undo', null); }
   function handleRedo() { editorRef.current?.trigger('keyboard', 'redo', null); }
   function handleFind() { editorRef.current?.getAction('actions.find')?.run(); }
 
-  // ── Terminal resize ───────────────────────────────────────────────────
-  function onTerminalResizeStart(e: React.MouseEvent) {
-    e.preventDefault();
-    termResizingRef.current = true;
-    const startY = e.clientY;
-    const startH = terminalHeight;
-    function onMove(ev: MouseEvent) {
-      if (!termResizingRef.current) return;
-      const delta = startY - ev.clientY;
-      setTerminalHeight(Math.max(100, Math.min(600, startH + delta)));
-    }
-    function onUp() { termResizingRef.current = false; window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); }
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-  }
+  const onTerminalResizeStart = useResize(
+    'y',
+    () => terminalHeight,
+    (h) => setTerminalHeight(h),
+    100, 600,
+    true
+  );
 
-  // ── AI Panel resize ───────────────────────────────────────────────────
-  function onAiResizeStart(e: React.MouseEvent) {
-    e.preventDefault();
-    aiResizingRef.current = true;
-    const startX = e.clientX;
-    const startW = settings['workbench.aiPanelWidth'];
-    const isRight = settings['workbench.aiPanelPosition'] === 'right';
-    function onMove(ev: MouseEvent) {
-      if (!aiResizingRef.current) return;
-      const delta = isRight ? startX - ev.clientX : ev.clientX - startX;
-      setSettings(s => ({ ...s, 'workbench.aiPanelWidth': Math.max(250, Math.min(600, startW + delta)) }));
-    }
-    function onUp() { aiResizingRef.current = false; window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); }
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-  }
+  const onAiResizeStart = useResize(
+    'x',
+    () => settings['workbench.aiPanelWidth'],
+    (w) => setSettings(s => ({ ...s, 'workbench.aiPanelWidth': w })),
+    250, 600,
+    settings['workbench.aiPanelPosition'] === 'right'
+  );
 
   // ── Barra de tabs virtual (incluye settings) ──────────────────────────
   const allTabs = tabs;
@@ -330,7 +303,17 @@ export default function App() {
 
   function handleSelectDisplayTab(id: string) {
     if (id === SETTINGS_TAB_ID) { setSettingsOpen(true); }
-    else { setActiveTabId(id); setSettingsOpen(false); }
+    else {
+      // Guardar contenido actual del editor en el tab que se desactiva
+      if (activeTabId && editorRef.current) {
+        const currentContent = editorRef.current.getValue();
+        setTabs(prev => prev.map(t =>
+          t.id === activeTabId ? { ...t, content: currentContent } : t
+        ));
+      }
+      setActiveTabId(id);
+      setSettingsOpen(false);
+    }
   }
 
   function handleCloseDisplayTab(id: string) {
@@ -370,6 +353,7 @@ export default function App() {
         {/* AI Panel izquierda */}
         {settings['workbench.aiPanelPosition'] === 'left' && (
           <AIPanel
+            key={`ai-left-${rootPath ?? ''}`}
             visible={aiPanelVisible}
             onToggle={() => setAiPanelVisible(v => !v)}
             width={settings['workbench.aiPanelWidth']}
@@ -396,6 +380,7 @@ export default function App() {
                   onFileSelect={handleOpenFile}
                   onTreeChange={() => refreshTree()}
                   activeFilePath={activeTab?.path ?? null}
+                  iconTheme={settings['workbench.iconTheme']}
                 />
               )}
               {activeView === 'extensions' && <ExtensionsPanel />}
@@ -406,7 +391,7 @@ export default function App() {
                   cwd={rootPath}
                   onRunProject={(command) => {
                     setTerminalVisible(true);
-                    invoke('write_terminal', { data: command + '\n' }).catch(() => { });
+                    api.writeTerminal(0, command + '\n').catch(() => { });
                   }}
                 />
               )}
@@ -469,6 +454,7 @@ export default function App() {
                   onFileSelect={handleOpenFile}
                   onTreeChange={() => refreshTree()}
                   activeFilePath={activeTab?.path ?? null}
+                  iconTheme={settings['workbench.iconTheme']}
                 />
               )}
               {activeView === 'search' && <SearchPanel />}
@@ -478,11 +464,12 @@ export default function App() {
                   cwd={rootPath}
                   onRunProject={(command) => {
                     setTerminalVisible(true);
-                    invoke('write_terminal', { data: command + '\n' }).catch(() => { });
+                    api.writeTerminal(0, command + '\n').catch(() => { });
                   }}
                 />
               )}
               {activeView === 'extensions' && <ExtensionsPanel />}
+              {activeView === 'containers' && <Contenedores />}
             </div>
           </>
         )}
@@ -493,6 +480,7 @@ export default function App() {
         )}
         {settings['workbench.aiPanelPosition'] === 'right' && (
           <AIPanel
+            key={`ai-right-${rootPath ?? ''}`}
             visible={aiPanelVisible}
             onToggle={() => setAiPanelVisible(v => !v)}
             width={settings['workbench.aiPanelWidth']}
@@ -504,6 +492,7 @@ export default function App() {
       </div>
 
       <TerminalPanel
+        ref={terminalPanelRef}
         visible={terminalVisible}
         onToggle={() => setTerminalVisible(v => !v)}
         cwd={rootPath}

@@ -22,6 +22,7 @@ const EXT_MAP: Record<string, string> = {
   // Data
   json: 'json', jsonc: 'json', json5: 'json',
   jsonl: 'json',
+  astropulsar: 'json',
   xml: 'xml', svg: 'xml', xsl: 'xml', xslt: 'xml', xsd: 'xml',
   plist: 'xml',
   // Markup

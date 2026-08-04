@@ -1,7 +1,22 @@
 import type * as Monaco from 'monaco-editor';
 
+// Track disposables to prevent cumulative registration (memory leak)
+let completionDisposables: { dispose(): void }[] = [];
+let keywordDisposables: { dispose(): void }[] = [];
+
+/** Dispone todos los providers registrados — llamar al cambiar de proyecto */
+export function disposeAllCompletionProviders() {
+  completionDisposables.forEach(d => d.dispose());
+  completionDisposables = [];
+  keywordDisposables.forEach(d => d.dispose());
+  keywordDisposables = [];
+}
+
 // Registrar providers de autocompletado para cada lenguaje
-export function registerCompletionProviders(monaco: typeof Monaco) {
+export function registerCompletionProviders(monaco: any) {
+  // Limpiar registros anteriores para evitar duplicados
+  completionDisposables.forEach(d => d.dispose());
+  completionDisposables = [];
   // ── JavaScript / TypeScript ────────────────────────────────────────────
   const jstsSnippets: Monaco.languages.CompletionItem[] = [
     // React
@@ -335,13 +350,13 @@ function snip(prefix: string, label: string, body: string): any {
 }
 
 function registerProvider(
-  monaco: typeof Monaco,
+  monaco: any,
   languages: string[],
   snippets: any[]
 ) {
   for (const lang of languages) {
-    monaco.languages.registerCompletionItemProvider(lang, {
-      provideCompletionItems(model, position) {
+    const disposable = monaco.languages.registerCompletionItemProvider(lang, {
+      provideCompletionItems(model: any, position: any) {
         const word = model.getWordUntilPosition(position);
         const range = {
           startLineNumber: position.lineNumber,
@@ -363,15 +378,16 @@ function registerProvider(
       },
       triggerCharacters: ['.', '<', '"', "'", '/', '@', '#'],
     });
+    completionDisposables.push(disposable);
   }
 }
 
 // ── Keywords & Built-ins ─────────────────────────────────────────────────────
 
-function registerKeywords(monaco: typeof Monaco, languages: string[], keywords: string[], builtins: string[]) {
+function registerKeywords(monaco: any, languages: string[], keywords: string[], builtins: string[]) {
   for (const lang of languages) {
-    monaco.languages.registerCompletionItemProvider(lang, {
-      provideCompletionItems(model, position) {
+    const disposable = monaco.languages.registerCompletionItemProvider(lang, {
+      provideCompletionItems(model: any, position: any) {
         const word = model.getWordUntilPosition(position);
         const range = {
           startLineNumber: position.lineNumber,
@@ -420,12 +436,17 @@ function registerKeywords(monaco: typeof Monaco, languages: string[], keywords: 
         return { suggestions: [...docSuggestions, ...keywordSuggestions, ...builtinSuggestions] };
       },
     });
+    keywordDisposables.push(disposable);
   }
 }
 
 // ── Register keywords for all languages ──────────────────────────────────────
 
-export function registerLanguageKeywords(monaco: typeof Monaco) {
+export function registerLanguageKeywords(monaco: any) {
+  // Limpiar registros anteriores para evitar duplicados
+  keywordDisposables.forEach(d => d.dispose());
+  keywordDisposables = [];
+
   // Python
   registerKeywords(monaco, ['python'], [
     'False', 'None', 'True', 'and', 'as', 'assert', 'async', 'await',

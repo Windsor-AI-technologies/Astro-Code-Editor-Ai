@@ -30,10 +30,6 @@ function Show-Help {
     Write-Host ""
 }
 
-function Start-Dev {
-    Write-Host " Iniciando modo desarrollo..." -ForegroundColor Yellow
-    npx tauri dev
-}
 
 function Start-Build {
     Write-Host " Compilando Astro Editor (release optimizado)..." -ForegroundColor Yellow
@@ -144,7 +140,6 @@ function Start-Run {
 
 # ── Ejecutar comando ──────────────────────────────────────────────────────────
 switch ($Command.ToLower()) {
-    "dev"       { Start-Dev }
     "build"     { Start-Build }
     "check"     { Start-Check }
     "clean"     { Start-Clean }

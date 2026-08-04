@@ -60,14 +60,56 @@ fn rename_path(old_path: String, new_path: String) -> Result<(), String> {
     fs::rename(&old_path, &new_path).map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+fn move_path(source: String, dest_folder: String) -> Result<String, String> {
+    let source_path = std::path::Path::new(&source);
+    let file_name = source_path.file_name()
+        .ok_or_else(|| "No se pudo obtener el nombre del archivo".to_string())?;
+    
+    let dest_path = std::path::Path::new(&dest_folder).join(file_name);
+    
+    // No mover a la misma ubicación
+    if source_path == dest_path {
+        return Err("Origen y destino son iguales".to_string());
+    }
+    
+    // No mover una carpeta dentro de sí misma
+    if dest_path.starts_with(source_path) {
+        return Err("No se puede mover una carpeta dentro de sí misma".to_string());
+    }
+    
+    // No sobreescribir si ya existe
+    if dest_path.exists() {
+        return Err(format!("Ya existe: {}", dest_path.display()));
+    }
+    
+    fs::rename(&source, &dest_path).map_err(|e| {
+        // Si rename falla (cross-device), intentar copy + delete
+        if e.kind() == std::io::ErrorKind::Other || e.kind() == std::io::ErrorKind::PermissionDenied {
+            // Fallback: copiar y borrar
+            if source_path.is_dir() {
+                return format!("No se puede mover entre volúmenes: {}", e);
+            }
+            match fs::copy(&source, &dest_path) {
+                Ok(_) => { let _ = fs::remove_file(&source); return "ok_fallback".to_string(); }
+                Err(e2) => return format!("Error al copiar: {}", e2),
+            }
+        }
+        e.to_string()
+    }).and_then(|_| Ok(dest_path.to_string_lossy().to_string()))
+    .or_else(|e| if e == "ok_fallback" { Ok(dest_path.to_string_lossy().to_string()) } else { Err(e) })
+}
+
 // ── Explorador ──────────────────────────────────────────────────────────────
 
 #[tauri::command]
 fn read_dir(path: String) -> Result<Vec<FileEntry>, String> {
-    read_dir_recursive(&path, 0)
+    read_dir_shallow(&path)
 }
 
-fn read_dir_recursive(path: &str, depth: usize) -> Result<Vec<FileEntry>, String> {
+/// Lista solo el nivel inmediato de un directorio (sin recursión).
+/// Las carpetas tienen children: None, indicando que se cargan bajo demanda.
+fn read_dir_shallow(path: &str) -> Result<Vec<FileEntry>, String> {
     let entries = fs::read_dir(path).map_err(|e| e.to_string())?;
     let mut result: Vec<FileEntry> = Vec::new();
 
@@ -77,20 +119,14 @@ fn read_dir_recursive(path: &str, depth: usize) -> Result<Vec<FileEntry>, String
         let name = entry.file_name().to_string_lossy().to_string();
         let entry_path = entry.path().to_string_lossy().to_string();
 
-        if name.starts_with('.') && depth > 0 { continue; }
+        // Filtrar ocultos y directorios pesados
+        if name.starts_with('.') { continue; }
         if name == "node_modules" || name == "target" || name == ".git" { continue; }
 
         let is_dir = metadata.is_dir();
-        let children = if is_dir && depth < 4 {
-            match read_dir_recursive(&entry_path, depth + 1) {
-                Ok(c) => Some(c),
-                Err(_) => Some(vec![]),
-            }
-        } else if is_dir {
-            Some(vec![])
-        } else {
-            None
-        };
+        // Para directorios: children = None indica "cargable bajo demanda"
+        // El frontend llamará read_dir cuando el usuario expanda la carpeta
+        let children = if is_dir { Some(vec![]) } else { None };
 
         result.push(FileEntry { name, path: entry_path, is_dir, children });
     }
@@ -326,6 +362,7 @@ pub fn run() {
             create_dir,
             delete_path,
             rename_path,
+            move_path,
             read_dir,
             open_folder_dialog,
             open_file_dialog,
@@ -347,6 +384,7 @@ pub fn run() {
             terminal::write_terminal,
             terminal::resize_terminal,
             terminal::kill_terminal,
+            terminal::kill_all_terminals,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
