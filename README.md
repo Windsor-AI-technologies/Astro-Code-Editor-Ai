@@ -2,7 +2,7 @@
 
 -lightweight, high-performance AI-powered code editor and IDE built from scratch using **Tauri 2**, **Rust**, **React**, and **Monaco Editor**. 
 
-Designed as the ultimate minimal alternative to heavy development environments, **Astro Code Editor AI** delivers a modern, blazing-fast workspace running smoothly on just **~9 MB of RAM**.
+Designed as the ultimate minimal alternative to heavy development environments, **Astro Code Editor AI** delivers a modern, blazing-fast workspace running smoothly on just **~ < 20 MB of RAM**.
 
 ---
 
