@@ -202,7 +202,7 @@ export default function CodeEditor({
       <MonacoEditor
         height="100%"
         language={tab.language}
-        defaultValue={tab.content}
+        value={tab.content}
         theme={themeId}
         beforeMount={handleBeforeMount}
         onChange={handleChange}
