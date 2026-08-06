@@ -11,12 +11,14 @@ import { useEditorActions } from './hooks/useEditorActions';
 import { useAutoSave } from './hooks/useAutoSave';
 import { useKeyboard } from './hooks/useKeyboard';
 import { useResize } from './hooks/useResize';
+import { useDebugger } from './hooks/useDebugger';
 
 import { WorkspaceContext } from './contexts/WorkspaceContext';
 import { TabsContext } from './contexts/TabsContext';
 import { SettingsContext } from './contexts/SettingsContext';
 import { UIContext } from './contexts/UIContext';
 import { ActionsContext } from './contexts/ActionsContext';
+import { DebugContext } from './contexts/DebugContext';
 
 import AppLayout from './AppLayout';
 
@@ -31,6 +33,7 @@ export default function App() {
   const workspace = useWorkspace();
   const tabs = useTabs(editorRef);
   const ui = useUIState();
+  const debugger_ = useDebugger();
 
   const { save } = useSave({
     activeTab: tabs.activeTab, rootPath: workspace.rootPath,
@@ -120,6 +123,18 @@ export default function App() {
     onSidebarResize, onTerminalResize, onAiResize, terminalPanelRef,
   }), [save, tabs.activeTab, settingsStore.settingsOpen]);
 
+  const debugCtx = useMemo(() => ({
+    state: debugger_.state, breakpoints: debugger_.breakpoints,
+    callFrames: debugger_.callFrames, variables: debugger_.variables,
+    pausedFile: debugger_.pausedFile, pausedLine: debugger_.pausedLine,
+    output: debugger_.output, error: debugger_.error,
+    start: debugger_.start, stop: debugger_.stop,
+    resume: debugger_.resume, stepOver: debugger_.stepOver,
+    stepInto: debugger_.stepInto, stepOut: debugger_.stepOut,
+    pause: debugger_.pause, toggleBreakpoint: debugger_.toggleBreakpoint,
+    evaluate: debugger_.evaluate,
+  }), [debugger_.state, debugger_.breakpoints, debugger_.callFrames, debugger_.variables, debugger_.pausedFile, debugger_.pausedLine, debugger_.output, debugger_.error]);
+
   // ── Render ──────────────────────────────────────────────────────────────
   return (
     <WorkspaceContext.Provider value={workspaceCtx}>
@@ -127,7 +142,9 @@ export default function App() {
         <SettingsContext.Provider value={settingsCtx}>
           <UIContext.Provider value={uiCtx}>
             <ActionsContext.Provider value={actionsCtx}>
-              <AppLayout />
+              <DebugContext.Provider value={debugCtx}>
+                <AppLayout />
+              </DebugContext.Provider>
             </ActionsContext.Provider>
           </UIContext.Provider>
         </SettingsContext.Provider>

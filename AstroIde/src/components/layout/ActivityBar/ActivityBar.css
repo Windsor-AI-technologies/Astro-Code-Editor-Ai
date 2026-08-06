@@ -4,12 +4,18 @@
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
-  width: 40px;
-  background: transparent;
+  width: 60px;
+  background: var(--bg-0);
   padding: 8px 0;
   flex-shrink: 0;
+  margin-left: -6px;
+  margin-top: -6px;
+  margin-bottom: -6px;
 }
+.app.acrylic-on .activity-bar{
+  background: transparent;
 
+}
 .activity-top,
 .activity-bottom {
   display: flex;

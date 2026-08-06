@@ -30,12 +30,19 @@ interface CodeEditorProps {
   onLanguageChange: (lang: string) => void;
   editorRef: React.MutableRefObject<Monaco.editor.IStandaloneCodeEditor | null>;
   rootPath?: string | null;
+  // Debug
+  breakpoints?: { file: string; line: number }[];
+  pausedLine?: number | null;
+  pausedFile?: string | null;
+  onToggleBreakpoint?: (file: string, line: number) => void;
 }
 
 export default function CodeEditor({
   tab, settings, themeId, onChange, onLanguageChange, editorRef, rootPath,
+  breakpoints = [], pausedLine = null, pausedFile = null, onToggleBreakpoint,
 }: CodeEditorProps) {
   const monacoRef = useRef<any>(null);
+  const decorationsRef = useRef<string[]>([]);
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number } | null>(null);
   const [cmdPaletteVisible, setCmdPaletteVisible] = useState(false);
 
@@ -141,6 +148,19 @@ export default function CodeEditor({
       setCmdPaletteVisible(true);
     });
 
+    // Click en gutter (margen de numeros de linea) para breakpoints
+    editor.onMouseDown((e) => {
+      if (
+        e.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN ||
+        e.target.type === monaco.editor.MouseTargetType.GUTTER_LINE_NUMBERS
+      ) {
+        const line = e.target.position?.lineNumber;
+        if (line && tab?.path && onToggleBreakpoint) {
+          onToggleBreakpoint(tab.path, line);
+        }
+      }
+    });
+
     editor.focus();
   };
 
@@ -155,6 +175,42 @@ export default function CodeEditor({
   }, [tab?.language]);
 
   // ── LSP: desactivado — evitar uso de memoria innecesario
+
+  // ── Debug decorations (breakpoints + paused line) ─────────────────────
+  useEffect(() => {
+    const editor = editorRef.current;
+    const monaco = monacoRef.current;
+    if (!editor || !monaco || !tab) return;
+
+    const newDecorations: any[] = [];
+
+    // Breakpoint dots (red circles in gutter)
+    const fileBreakpoints = breakpoints.filter(b => b.file === tab.path);
+    for (const bp of fileBreakpoints) {
+      newDecorations.push({
+        range: new monaco.Range(bp.line, 1, bp.line, 1),
+        options: {
+          isWholeLine: false,
+          glyphMarginClassName: 'debug-breakpoint-glyph',
+          glyphMarginHoverMessage: { value: `Breakpoint linea ${bp.line}` },
+        },
+      });
+    }
+
+    // Paused line highlight (yellow background)
+    if (pausedLine && pausedFile === tab.path) {
+      newDecorations.push({
+        range: new monaco.Range(pausedLine, 1, pausedLine, 1),
+        options: {
+          isWholeLine: true,
+          className: 'debug-paused-line',
+          glyphMarginClassName: 'debug-paused-glyph',
+        },
+      });
+    }
+
+    decorationsRef.current = editor.deltaDecorations(decorationsRef.current, newDecorations);
+  }, [breakpoints, pausedLine, pausedFile, tab?.path]);
 
   if (!tab) {
     return (
@@ -202,7 +258,7 @@ export default function CodeEditor({
       <MonacoEditor
         height="100%"
         language={tab.language}
-        value={tab.content}
+        defaultValue={tab.content}
         theme={themeId}
         beforeMount={handleBeforeMount}
         onChange={handleChange}
@@ -210,6 +266,7 @@ export default function CodeEditor({
         options={{
           ...settings,
           automaticLayout: true,
+          glyphMargin: true,
           fixedOverflowWidgets: true,
           contextmenu: false,
           scrollBeyondLastLine: false,

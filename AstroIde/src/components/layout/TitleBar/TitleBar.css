@@ -4,12 +4,16 @@
   align-items: center;
   justify-content: space-between;
   height: 38px;
-  background: transparent;
+  background-color: var(--bg-0);
 
   padding: 0 12px;
   flex-shrink: 0;
   z-index: 100;
   -webkit-app-region: drag;
+}
+.app.acrylic-on .titlebar {
+  background: transparent;
+
 }
 
 .titlebar-left {

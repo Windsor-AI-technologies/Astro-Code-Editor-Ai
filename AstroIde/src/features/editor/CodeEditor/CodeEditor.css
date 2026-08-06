@@ -22,7 +22,7 @@
   position: relative;
   z-index: 1;
   text-align: center;
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 .welcome-icon {
@@ -121,4 +121,30 @@ kbd {
   color: var(--text-primary);
   font-size: 11px;
   cursor: pointer;
+}
+
+/* ─── Debug Decorations ──────────────────────────────────────────────── */
+
+.debug-breakpoint-glyph {
+  background: #e51400;
+  border-radius: 50%;
+  width: 10px !important;
+  height: 10px !important;
+  margin-left: 4px;
+  margin-top: 5px;
+  cursor: pointer;
+}
+
+.debug-paused-glyph {
+  background: #ffcc00;
+  clip-path: polygon(0% 20%, 60% 50%, 0% 80%);
+  width: 10px !important;
+  height: 14px !important;
+  margin-left: 4px;
+  margin-top: 3px;
+}
+
+.debug-paused-line {
+  background: rgba(255, 204, 0, 0.12) !important;
+  border-left: 2px solid #ffcc00;
 }

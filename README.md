@@ -58,7 +58,7 @@ Follow these quick steps to clone and run the editor locally:
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com
+   git clone https://github.com/Jeshua3545926/Astro-Code-Editor-Ai.git
    ```
 
 2. **Install frontend dependencies:**

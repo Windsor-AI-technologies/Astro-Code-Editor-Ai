@@ -1,5 +1,4 @@
 import { useSettingsCtx } from './contexts/SettingsContext';
-
 import TitleBarSlot from './components/layout/slots/TitleBarSlot';
 import ActivityBarSlot from './components/layout/slots/ActivityBarSlot';
 import AIPanelSlot from './components/layout/slots/AIPanelSlot';

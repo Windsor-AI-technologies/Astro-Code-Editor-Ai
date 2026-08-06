@@ -6,8 +6,10 @@ use tauri::Manager;
 
 mod terminal;
 mod lsp;
+mod debugger;
 use terminal::TerminalState;
 use lsp::{LspState, new_lsp_state};
+use debugger::DebuggerState;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FileEntry {
@@ -336,6 +338,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .manage(Arc::new(TerminalState::new()))
         .manage(new_lsp_state())
+        .manage(Arc::new(DebuggerState::new()))
         .setup(|app| {
             let win = app.get_webview_window("main").unwrap();
 
@@ -385,6 +388,17 @@ pub fn run() {
             terminal::resize_terminal,
             terminal::kill_terminal,
             terminal::kill_all_terminals,
+            debugger::debug_start,
+            debugger::debug_stop,
+            debugger::debug_set_breakpoint,
+            debugger::debug_remove_breakpoint,
+            debugger::debug_resume,
+            debugger::debug_step_over,
+            debugger::debug_step_into,
+            debugger::debug_step_out,
+            debugger::debug_pause,
+            debugger::debug_evaluate,
+            debugger::debug_get_properties,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -729,26 +729,105 @@ export const THEMES: ThemeDefinition[] = [
         'editorBracketMatch.background': '#3994BC55',
         'editorBracketMatch.border': '#2A2B2CFF',
       }, [
-        { token: 'comment', foreground: '8b949e' },
+        // Default / identifier (variables, JSX tags, props — all use this in TSX)
+        { token: '', foreground: 'c9d1d9' },
+        { token: 'identifier', foreground: 'c9d1d9' },
+        { token: 'identifier.ts', foreground: 'c9d1d9' },
+        { token: 'identifier.js', foreground: 'c9d1d9' },
+        // Comments
+        { token: 'comment', foreground: '8b949e', fontStyle: 'italic' },
+        { token: 'comment.ts', foreground: '8b949e', fontStyle: 'italic' },
+        { token: 'comment.js', foreground: '8b949e', fontStyle: 'italic' },
+        // Keywords (const, let, return, import, export, function, class, etc.)
         { token: 'keyword', foreground: 'ff7b72' },
+        { token: 'keyword.ts', foreground: 'ff7b72' },
+        { token: 'keyword.js', foreground: 'ff7b72' },
+        { token: 'keyword.control', foreground: 'ff7b72' },
+        { token: 'keyword.operator', foreground: 'ff7b72' },
+        { token: 'keyword.other', foreground: 'ff7b72' },
+        // Storage (var, let, const, function, class, interface, type)
         { token: 'storage', foreground: 'ff7b72' },
+        { token: 'storage.type', foreground: 'ff7b72' },
+        // Strings
         { token: 'string', foreground: 'a5d6ff' },
+        { token: 'string.ts', foreground: 'a5d6ff' },
+        { token: 'string.js', foreground: 'a5d6ff' },
+        { token: 'string.key', foreground: '7ee787' },
+        { token: 'string.value', foreground: 'a5d6ff' },
+        { token: 'string.html', foreground: 'a5d6ff' },
+        { token: 'string.regex', foreground: '7ee787' },
+        // Numbers
         { token: 'number', foreground: '79c0ff' },
+        { token: 'number.ts', foreground: '79c0ff' },
+        { token: 'number.js', foreground: '79c0ff' },
+        { token: 'number.hex', foreground: '79c0ff' },
+        { token: 'number.float', foreground: '79c0ff' },
+        // Constants (true, false, null, undefined)
         { token: 'constant', foreground: '79c0ff' },
+        { token: 'constant.language', foreground: '79c0ff' },
+        // Types (interface names, type annotations)
         { token: 'type', foreground: 'ffa657' },
+        { token: 'type.ts', foreground: 'ffa657' },
+        { token: 'type.identifier', foreground: 'ffa657' },
+        { token: 'type.identifier.ts', foreground: 'ffa657' },
+        // Functions
         { token: 'function', foreground: 'd2a8ff' },
+        { token: 'function.call', foreground: 'd2a8ff' },
+        // Variables
         { token: 'variable', foreground: 'c9d1d9' },
         { token: 'variable.other', foreground: 'c9d1d9' },
+        { token: 'variable.parameter', foreground: 'c9d1d9' },
+        { token: 'variable.predefined', foreground: '79c0ff' },
+        // Entity names
         { token: 'entity.name', foreground: 'ffa657' },
         { token: 'entity.name.function', foreground: 'd2a8ff' },
+        // JSX/HTML tags (in .html files and when Monaco recognizes them)
         { token: 'entity.name.tag', foreground: '7ee787' },
         { token: 'tag', foreground: '7ee787' },
+        { token: 'tag.ts', foreground: '7ee787' },
+        { token: 'tag.js', foreground: '7ee787' },
+        { token: 'tag.html', foreground: '7ee787' },
+        { token: 'tag.id.html', foreground: '7ee787' },
+        { token: 'tag.class.html', foreground: '7ee787' },
+        { token: 'metatag', foreground: '7ee787' },
+        { token: 'metatag.html', foreground: '7ee787' },
+        { token: 'metatag.content.html', foreground: '7ee787' },
+        // JSX/HTML delimiters (< > </ />)
+        { token: 'delimiter.html', foreground: '8b949e' },
+        // JSX/HTML attributes
         { token: 'attribute.name', foreground: '79c0ff' },
+        { token: 'attribute.name.html', foreground: '79c0ff' },
         { token: 'attribute.value', foreground: 'a5d6ff' },
+        { token: 'attribute.value.html', foreground: 'a5d6ff' },
+        { token: 'attribute.value.number.html', foreground: '79c0ff' },
+        // Support (built-in objects/functions)
         { token: 'support', foreground: '79c0ff' },
+        { token: 'support.function', foreground: 'd2a8ff' },
+        { token: 'support.type', foreground: 'ffa657' },
+        { token: 'support.variable', foreground: '79c0ff' },
+        // Operators (=, +, -, ===, =>, ??, etc.)
         { token: 'operator', foreground: 'ff7b72' },
+        { token: 'operator.ts', foreground: 'ff7b72' },
+        { token: 'operator.js', foreground: 'ff7b72' },
+        { token: 'operator.arrow', foreground: 'ff7b72' },
+        // Delimiters ({ } ( ) [ ] ; , .)
         { token: 'delimiter', foreground: 'BBBEBF' },
+        { token: 'delimiter.ts', foreground: 'BBBEBF' },
+        { token: 'delimiter.js', foreground: 'BBBEBF' },
+        { token: 'delimiter.bracket', foreground: 'BBBEBF' },
+        { token: 'delimiter.parenthesis', foreground: 'BBBEBF' },
+        { token: 'delimiter.square', foreground: 'BBBEBF' },
+        { token: 'delimiter.angle', foreground: 'BBBEBF' },
+        // Regexp
+        { token: 'regexp', foreground: '7ee787' },
+        { token: 'regexp.ts', foreground: '7ee787' },
+        { token: 'regexp.js', foreground: '7ee787' },
+        { token: 'regexp.escape', foreground: 'ffa657' },
+        // Invalid
         { token: 'invalid', foreground: 'ffa198', fontStyle: 'italic' },
+        // Annotations / decorators
+        { token: 'annotation', foreground: 'ffa657' },
+        { token: 'meta', foreground: '8b949e' },
       ]),
     };
   })(),

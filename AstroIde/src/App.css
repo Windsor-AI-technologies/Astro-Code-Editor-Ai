@@ -68,12 +68,35 @@ body,
   background: transparent;
 }
 
-/* ─── Main Layout — con padding para border-radius ───────────────────── */
+.app.acrylic-on~* {
+  background: transparent;
+}
+
+/* body y #root también transparentes cuando acrylic está activo */
+body:has(.acrylic-on) {
+  background: transparent !important;
+}
+
+body:has(.acrylic-on) #root {
+  background: transparent !important;
+}
+
+/* Los paneles dentro del app-body deben tener fondos semi-transparentes con acrylic */
+.acrylic-on .main-column {
+  background: rgba(26, 27, 38, 0.75);
+}
+
+.acrylic-on .app-body {
+  background: transparent;
+}
+
+/* ─── Main Layout ─────────────────────────────────────────────────────── */
 .app-body {
   display: flex;
   flex: 1;
   overflow: hidden;
   padding: 6px;
+  padding-left: 0;
   gap: 6px;
 }
 
@@ -89,39 +112,42 @@ body,
   background: transparent;
 }
 
-/* ─── Sidebar con border-radius y acrílico nativo ─────────────────────── */
+/* ─── Sidebar ─────────────────────────────────────────────────────────── */
 .sidebar {
   display: flex;
   flex-direction: column;
   position: relative;
   overflow: hidden;
   flex-shrink: 0;
-  background: var(--bg-1);
+  margin-top: -5px;
+  margin-left: -7px;
+  background: var(--bg-0);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  /* margin-top: 10px; */
+  border-radius:5px;
 }
 
 /* Cuando el acrílico está ON, el sidebar es transparente
    y el blur nativo de Windows se ve directamente */
 .sidebar.acrylic {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--bg-0);
+
 }
 
 /* Gradiente: sólido abajo → transparente (blur visible) arriba */
+
+.app.acrylic-on .sidebar{
+  background-color: transparent;
+  border: none;
+}
+
 .sidebar.acrylic::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom,
-      var(--sidebar-acrylic-mid) 0%,
-      var(--sidebar-acrylic-mid) 30%,
-      var(--sidebar-acrylic-bottom) 70%,
-      var(--sidebar-acrylic-bottom) 100%);
-  border-radius: 10px;
-  z-index: 1;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0) 0%, transparent 140px),
+    radial-gradient(950px 600px at 15% 10%, var(--sidebar-acrylic-mid), var(--sidebar-acrylic-mid) 60%, var(--bg-0));
   pointer-events: none;
+  z-index: 0;
 }
 
 .sidebar.acrylic .file-explorer,
@@ -152,7 +178,6 @@ body,
   flex-direction: column;
   flex: 1;
   overflow: hidden;
-
   min-width: 0;
   background: var(--bg-0);
 }
