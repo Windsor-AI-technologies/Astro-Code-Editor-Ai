@@ -1,4 +1,5 @@
-/* ─── Extensions Panel ────────────────────────────────────────────────── */
+/* ─── Extensions Panel ───────────────────────────────────────────────── */
+
 .extensions-panel {
   display: flex;
   flex-direction: column;
@@ -18,68 +19,357 @@
   flex-shrink: 0;
 }
 
-.extensions-title {
-  flex: 1;
-}
-
 .extensions-search {
-  padding: 4px 10px 8px;
+  padding: 4px 8px 6px;
   flex-shrink: 0;
 }
 
 .extensions-input-wrap {
-  position: relative;
   display: flex;
   align-items: center;
+  gap: 6px;
+  background: var(--bg-0);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 8px;
 }
 
 .extensions-search-icon {
-  position: absolute;
-  left: 8px;
   color: var(--text-dim);
-  pointer-events: none;
+  flex-shrink: 0;
 }
 
 .extensions-input {
-  width: 100%;
-  background: var(--bg-0);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
   color: var(--text-primary);
   font-size: 12px;
-  padding: 4px 8px 4px 26px;
-  outline: none;
-  transition: border-color 0.15s;
 }
 
-.extensions-input:focus {
-  border-color: var(--accent);
+/* Tabs */
+.extensions-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
-.extensions-content {
+.ext-tab {
   flex: 1;
+  padding: 6px 4px;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 11px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+}
+
+.ext-tab:hover {
+  color: var(--text-primary);
+}
+.ext-tab.active {
+  color: var(--text-primary);
+  border-bottom-color: var(--accent);
+}
+
+/* List */
+.extensions-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.ext-loading,
+.ext-empty {
+  padding: 20px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  gap: 6px;
 }
 
-.extensions-placeholder {
+.ext-error {
+  padding: 6px 10px;
+  font-size: 11px;
+  color: var(--danger);
+  background: rgba(247, 118, 142, 0.08);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Extension Card */
+.ext-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+
+.ext-card:hover {
+  background: var(--bg-hover);
+}
+.ext-card.disabled {
+  opacity: 0.5;
+}
+
+.ext-card-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+}
+
+.ext-card-icon img {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  object-fit: contain;
+}
+
+.ext-card-icon-placeholder {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  background: var(--bg-3);
+}
+
+.ext-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.ext-card-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ext-card-publisher {
+  font-size: 10px;
+  color: var(--text-primary);
+  margin-top: 1px;
+  font-weight: bold;
+}
+
+.ext-card-desc {
+  font-size: 11px;
+  color: var(--text-primary);
+  margin-top: 2px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ext-card-meta {
+  display: flex;
+  gap: 8px;
+  margin-top: 3px;
+}
+
+.ext-meta-item {
+  font-size: 10px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.ext-card-version {
+  font-size: 10px;
+  color: var(--text-primary);
+  margin-top: 2px;
+}
+
+.ext-card-action {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding-top: 4px;
+}
+
+.ext-action-btn {
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.ext-action-btn:hover {
+  color: var(--accent-fg);
+}
+.ext-installed-icon {
+  color: var(--success, #18b14e);
+}
+.ext-error-icon {
+  color: var(--danger);
+  font-weight: bold;
+  font-size: 13px;
+}
+
+.ext-card-actions {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 12px;
+  gap: 4px;
+  padding-top: 2px;
 }
 
-.extensions-placeholder-icon {
+.ext-icon-btn {
+  background: transparent;
+  border: none;
   color: var(--text-primary);
-  opacity: 0.6;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 3px;
+  display: flex;
 }
 
-.extensions-placeholder-text {
-  color: var(--text-secondary);
+.ext-icon-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+.ext-icon-btn.danger:hover {
+  color: var(--danger);
+}
+.ext-enabled {
+  color: var(--success, #73c991);
+}
+
+/* Detail View */
+.ext-detail {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  padding-bottom: 16px;
+}
+
+.ext-detail-header {
+  padding: 8px 10px;
+
+}
+
+.ext-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+.ext-back-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.ext-detail-hero {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 10px 8px;
+}
+
+.ext-detail-icon {
+  border-radius: 6px;
+  object-fit: contain;
+}
+.ext-detail-icon-placeholder {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  background: var(--bg-3);
+  flex-shrink: 0;
+}
+
+.ext-detail-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.ext-detail-publisher {
+  font-size: 11px;
+  color: var(--text-primary);
+  margin-top: 2px;
+}
+
+.ext-install-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 8px 10px;
+  padding: 7px 14px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 4px;
   font-size: 12px;
-  margin: 0;
+  cursor: pointer;
+}
+
+.ext-install-btn.disabled {
+  background-color: #17830d;
+}
+
+.ext-detail-desc {
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--text-primary);
   line-height: 1.5;
+}
+
+.ext-detail-meta {
+  padding: 0 15px;
+  /* border-top: 1px solid var(--text-primary); */
+
+}
+
+.ext-meta-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  font-size: 11px;
+  border-bottom: 1px solid var(--text-primary);
+  color: var(--text-primary);
+}
+
+.ext-meta-row span:first-child {
+  color: var(--text-primary);
+}
+
+.ext-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 10px;
+}
+
+.ext-tag {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: var(--bg-0);
+  border-radius: 10px;
+  color: var(--text-primary);
+}
+
+/* Spin animation */
+.spin {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

@@ -11,6 +11,10 @@
   flex-shrink: 0;
 }
 
+.app.acrylic-on .status-bar{
+  color: var(--accent-fg);
+}
+
 .status-left,
 .status-right {
   display: flex;

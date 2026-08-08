@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
-import MonacoEditor, { OnMount, OnChange, BeforeMount } from '@monaco-editor/react';
+import MonacoEditor, { OnMount, BeforeMount } from '@monaco-editor/react';
 import type * as Monaco from 'monaco-editor';
 import type { Tab } from '../../../types';
 import { getLanguageLabel, ALL_LANGUAGES } from '../../../utils/language';
@@ -26,7 +26,7 @@ interface CodeEditorProps {
   tab: Tab | null;
   settings: EditorOptions;
   themeId: string;
-  onChange: (value: string) => void;
+  onChange: () => void;
   onLanguageChange: (lang: string) => void;
   editorRef: React.MutableRefObject<Monaco.editor.IStandaloneCodeEditor | null>;
   rootPath?: string | null;
@@ -122,6 +122,11 @@ export default function CodeEditor({
     editorRef.current = editor;
     monacoRef.current = monaco;
 
+    // Escuchar cambios directamente del modelo (no via prop onChange que causa re-renders)
+    editor.onDidChangeModelContent(() => {
+      onChange();
+    });
+
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
       document.dispatchEvent(new CustomEvent('editor-save'));
     });
@@ -163,8 +168,6 @@ export default function CodeEditor({
 
     editor.focus();
   };
-
-  const handleChange: OnChange = (value) => onChange(value ?? '');
 
   // Cambiar lenguaje del modelo cuando cambia el tab
   useEffect(() => {
@@ -261,7 +264,6 @@ export default function CodeEditor({
         defaultValue={tab.content}
         theme={themeId}
         beforeMount={handleBeforeMount}
-        onChange={handleChange}
         onMount={handleMount}
         options={{
           ...settings,

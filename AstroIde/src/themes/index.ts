@@ -111,7 +111,7 @@ function mkTheme(
 }
 
 export const THEMES: ThemeDefinition[] = [
-  // ━━━━━━━━━━━━━━ KIRO DARK ━━━━━━━━━━━━━━
+  // ━━━━━━━━━━━━━━ Astro DARK ━━━━━━━━━━━━━━
   {
     id: 'kiro-dark',
     name: 'Kiro Dark',
@@ -461,9 +461,9 @@ export const THEMES: ThemeDefinition[] = [
       '--status-text': '#ffffff', '--danger': '#d32f2f',
       '--success': '#388e3c', '--warning': '#f57c00',
       '--toolbar-bg': 'rgba(243,243,243,0.95)',
-      '--sidebar-acrylic-top': 'rgba(243,243,243,0.05)',
-      '--sidebar-acrylic-mid': 'rgba(243,243,243,0.55)',
-      '--sidebar-acrylic-bottom': 'rgba(243,243,243,0.96)',
+      '--sidebar-acrylic-top': 'rgb(243, 243, 243)',
+      '--sidebar-acrylic-mid': 'rgb(243, 243, 243)',
+      '--sidebar-acrylic-bottom': 'rgb(243, 243, 243)',
     },
     monaco: mkTheme('vs', {
       'editor.background': '#ffffff',
@@ -637,24 +637,24 @@ export const THEMES: ThemeDefinition[] = [
     name: 'One Dark Pro Vivid',
     base: 'vs-dark',
     vars: {
-      '--bg-root': '#21252b', '--bg-0': '#282c34', '--bg-1': '#21253b',
+      '--bg-root': '#21252b', '--bg-0': '#191c21', '--bg-1': '#21253b23',
       '--bg-2': '#2c313a', '--bg-3': '#3a3f4b',
       '--bg-hover': 'rgba(79,193,255,0.08)',
       '--border': 'rgba(181,181,181,0.1)',
       '--text-primary': '#d7dae0', '--text-secondary': '#5c6370',
       '--text-dim': '#4b5263', '--accent': '#4fc1ff',
-      '--accent-hover': '#6dd0ff', '--accent-fg': '#282c34',
+      '--accent-hover': '#6dd0ff', '--accent-fg': '#ffffff',
       '--tab-active': '#282c34', '--tab-inactive': 'rgba(33,37,43,0.6)',
       '--tab-border': '#4fc1ff', '--status-bg': '#21252b',
       '--status-text': '#d7dae0', '--danger': '#ef596f',
       '--success': '#89ca78', '--warning': '#e5c07b',
       '--toolbar-bg': 'rgba(33,37,43,0.95)',
-      '--sidebar-acrylic-top': 'rgba(33,37,43,0.05)',
-      '--sidebar-acrylic-mid': 'rgba(33,37,43,0.45)',
+      '--sidebar-acrylic-top': 'rgb(33, 37, 43)',
+      '--sidebar-acrylic-mid': 'rgb(33, 37, 43)',
       '--sidebar-acrylic-bottom': 'rgba(33,37,43,0.95)',
     },
     monaco: mkTheme('vs-dark', {
-      'editor.background': '#282c34',
+      'editor.background': '#191c21',
       'editor.foreground': '#d7dae0',
       'editor.lineHighlightBackground': '#2c313c',
       'editor.selectionBackground': '#3e4451',

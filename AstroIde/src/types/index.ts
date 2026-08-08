@@ -1,3 +1,4 @@
+
 export interface FileEntry {
   name: string;
   path: string;
@@ -16,6 +17,7 @@ export interface Tab {
 
 export interface AppSettings {
   // Editor
+  'editor.lineHeight': number;
   'editor.fontSize': number;
   'editor.tabSize': number;
   'editor.wordWrap': 'on' | 'off' | 'wordWrapColumn' | 'bounded';
@@ -40,6 +42,7 @@ export interface AppSettings {
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
+  'editor.lineHeight': 20,
   'editor.fontSize': 14,
   'editor.tabSize': 2,
   'editor.wordWrap': 'off',
@@ -64,6 +67,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
 
 export function settingsToEditorOptions(s: AppSettings) {
   return {
+    lineHeight: s['editor.lineHeight'],
     fontSize: s['editor.fontSize'],
     tabSize: s['editor.tabSize'],
     wordWrap: s['editor.wordWrap'],
@@ -111,3 +115,44 @@ export const AI_MODELS: AIModel[] = [
   { id: 'deepseek-v3', name: 'DeepSeek V3', provider: 'DeepSeek', description: 'Open source, código' },
   { id: 'local-ollama', name: 'Ollama (Local)', provider: 'Local', description: 'Modelo local sin API key' },
 ];
+
+// ── Extensions / Marketplace Types ─────────────────────────────────────────
+
+export interface VSXExtension {
+  namespace: string;
+  name: string;
+  displayName: string;
+  version: string;
+  description: string;
+  averageRating?: number;
+  reviewCount?: number;
+  downloadCount?: number;
+  timestamp?: string;
+  icon?: string;
+  publisher: {
+    loginName: string;
+    displayName?: string;
+  };
+  tags?: string[];
+  categories?: string[];
+}
+
+export interface VSXSearchResult {
+  offset: number;
+  totalSize: number;
+  extensions: VSXExtension[];
+}
+
+export interface InstalledExtension {
+  id: string;       // namespace.name
+  name: string;
+  displayName: string;
+  version: string;
+  description: string;
+  icon?: string;
+  publisher: string;
+  enabled: boolean;
+  installPath: string;
+}
+
+export type ExtensionInstallStatus = 'idle' | 'downloading' | 'installing' | 'installed' | 'error';

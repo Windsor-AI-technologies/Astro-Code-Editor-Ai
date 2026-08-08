@@ -3,15 +3,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 38px;
-  background-color: var(--bg-0);
-
+  height: 30px;
   padding: 0 12px;
   flex-shrink: 0;
   z-index: 100;
   -webkit-app-region: drag;
 }
 .app.acrylic-on .titlebar {
+  color: var(--text-primary);
   background: transparent;
 
 }
@@ -39,6 +38,7 @@
   padding: 4px 16px;
   border-radius: 5px;
   font-size: 11px;
+  /* margin-top: 5px; */
   color: var(--text-primary);
   cursor: pointer;
   pointer-events: auto;
@@ -141,11 +141,14 @@
   padding: 4px 8px;
   background: transparent;
   border: none;
-  border-radius: var(--radius-sm);
   color: var(--text-primary);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 12px;
   -webkit-app-region: no-drag;
+}
+.app.acrylic-on .menu-item{
+    color:var(--accent-fg);
 }
 
 .menu-item:hover,

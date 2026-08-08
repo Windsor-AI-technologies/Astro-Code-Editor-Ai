@@ -89,3 +89,29 @@ export async function killAllTerminals(): Promise<void> {
 export async function detectProjectType(path: string): Promise<string> {
   return invoke<string>('detect_project_type', { path });
 }
+
+// ── Extensions / Marketplace ─────────────────────────────────────────────────
+
+export async function extSearch(query: string, offset = 0, size = 20): Promise<any> {
+  return invoke('ext_search', { query, offset, size });
+}
+
+export async function extGetDetails(namespace: string, name: string): Promise<any> {
+  return invoke('ext_get_details', { namespace, name });
+}
+
+export async function extInstall(namespace: string, name: string, version: string): Promise<string> {
+  return invoke<string>('ext_install', { namespace, name, version });
+}
+
+export async function extUninstall(id: string): Promise<void> {
+  return invoke('ext_uninstall', { id });
+}
+
+export async function extListInstalled(): Promise<any[]> {
+  return invoke<any[]>('ext_list_installed');
+}
+
+export async function extSetEnabled(id: string, enabled: boolean): Promise<void> {
+  return invoke('ext_set_enabled', { id, enabled });
+}

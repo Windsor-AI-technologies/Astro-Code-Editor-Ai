@@ -140,13 +140,17 @@ export function parseVariables(propsResponse: any): Variable[] {
     }));
 }
 
+const VALUE_FORMATTERS: Record<string, (val: any) => string> = {
+  string: (val) => `"${val.value}"`,
+  number: (val) => String(val.value),
+  boolean: (val) => String(val.value),
+  undefined: () => 'undefined',
+  function: (val) => `fn ${val.description?.slice(0, 30) ?? '()'}`,
+  object: (val) => val.subtype === 'null' ? 'null' : (val.description ?? '{...}'),
+};
+
 function formatValue(val: any): string {
   if (!val) return 'undefined';
-  if (val.type === 'string') return `"${val.value}"`;
-  if (val.type === 'number' || val.type === 'boolean') return String(val.value);
-  if (val.type === 'undefined') return 'undefined';
-  if (val.type === 'object' && val.subtype === 'null') return 'null';
-  if (val.type === 'object') return val.description ?? `{...}`;
-  if (val.type === 'function') return `fn ${val.description?.slice(0, 30) ?? '()'}`;
-  return val.description ?? String(val.value ?? val.type);
+  const formatter = VALUE_FORMATTERS[val.type];
+  return formatter ? formatter(val) : (val.description ?? String(val.value ?? val.type));
 }

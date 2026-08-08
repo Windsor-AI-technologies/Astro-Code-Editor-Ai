@@ -19,10 +19,9 @@
 .ai-panel {
   display: flex;
   flex-direction: column;
-  background: var(--bg-1);
-
-  border: 3px solid var(--border);
-  border-radius: 12px;
+  background: var(--bg-0);
+  border: 1px solid var(--border);
+  border-radius: 7px;
   overflow: hidden;
   flex-shrink: 0;
   position: relative;
@@ -31,7 +30,7 @@
 /* Acrílico en AI panel — mismo efecto que el sidebar */
 .ai-panel.acrylic {
   background: transparent;
-  border: 3px solid rgba(255, 255, 255, 0.167);
+  border: 1px solid rgba(255, 255, 255, 0.167);
 }
 
 .ai-panel.acrylic::after {

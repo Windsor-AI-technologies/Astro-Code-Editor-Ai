@@ -20,12 +20,21 @@ window-vibrancy = "0.6"
 dirs = "6"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-tungstenite = "0.24"
-ureq = "2"
+tungstenite = { version = "0.24", default-features = false, features = ["handshake"] }
+ureq = { version = "2", default-features = false, features = ["json", "tls"] }
+zip = { version = "2", default-features = false, features = ["deflate"] }
+urlencoding = "2"
 
 [profile.release]
-opt-level = "z"        # Optimizar para tamaño mínimo
-lto = true             # Link-Time Optimization (elimina código muerto)
-codegen-units = 1      # Mejor optimización (1 thread de compilación)
-strip = true           # Quitar símbolos de debug del binario
-panic = "abort"        # Menos código de manejo de panic
+opt-level = "z"        # Máxima optimización para tamaño mínimo
+lto = true             # Link-Time Optimization completo
+codegen-units = 1      # 1 thread = mejor optimización global
+strip = "symbols"      # Quitar todos los símbolos
+panic = "abort"        # Sin unwind = menos código
+
+[profile.release.build-override]
+opt-level = "z"
+
+[profile.dev]
+opt-level = 0
+incremental = true     # Compilación incremental en dev (más rápido)

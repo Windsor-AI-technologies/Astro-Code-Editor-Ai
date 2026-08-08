@@ -139,8 +139,8 @@ pub fn debug_start(
     ];
 
     for msg in enable_msgs {
-        ws.send(Message::Text(serde_json::to_string(&msg).unwrap()))
-            .map_err(|e| e.to_string())?;
+        ws.send(Message::Text(serde_json::to_string(&msg).unwrap().into()))
+            .map_err(|e: tungstenite::Error| e.to_string())?;
     }
 
     let mut session = DebugSession {
@@ -364,7 +364,7 @@ pub fn debug_get_properties(
 fn send_cdp(session: &mut DebugSession, msg: &Value) -> Result<(), String> {
     let ws = session.ws.as_mut().ok_or("WebSocket not connected")?;
     let text = serde_json::to_string(msg).map_err(|e| e.to_string())?;
-    ws.send(Message::Text(text)).map_err(|e| e.to_string())
+    ws.send(Message::Text(text.into())).map_err(|e: tungstenite::Error| e.to_string())
 }
 
 fn read_cdp_response(session: &mut DebugSession, expected_id: i64) -> Result<Value, String> {

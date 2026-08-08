@@ -5,7 +5,6 @@
   justify-content: space-between;
   align-items: center;
   width: 60px;
-  background: var(--bg-0);
   padding: 8px 0;
   flex-shrink: 0;
   margin-left: -6px;
@@ -38,7 +37,9 @@
   position: relative;
   transition: color 0.2s, background 0.2s, transform 0.2s;
 }
-
+.app.acrylic-on .activity-btn{
+  color: var(--accent-fg);
+}
 .activity-btn:hover {
   color: var(--text-primary);
   background: var(--bg-hover);
@@ -56,6 +57,10 @@
   color: var(--text-primary);
     background-color: var(--bg-0);
   animation: activityPop 0.3s ease-out;
+}
+
+.app.acrylic-on .activity-btn.active{
+    color: var(--text-primary);
 }
 
 /* Barra lateral accent */

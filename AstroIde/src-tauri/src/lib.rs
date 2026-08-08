@@ -7,6 +7,7 @@ use tauri::Manager;
 mod terminal;
 mod lsp;
 mod debugger;
+mod extensions;
 use terminal::TerminalState;
 use lsp::{LspState, new_lsp_state};
 use debugger::DebuggerState;
@@ -399,6 +400,12 @@ pub fn run() {
             debugger::debug_pause,
             debugger::debug_evaluate,
             debugger::debug_get_properties,
+            extensions::ext_search,
+            extensions::ext_get_details,
+            extensions::ext_install,
+            extensions::ext_uninstall,
+            extensions::ext_list_installed,
+            extensions::ext_set_enabled,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
