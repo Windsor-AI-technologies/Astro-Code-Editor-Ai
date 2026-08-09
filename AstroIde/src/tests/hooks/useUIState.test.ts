@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useUIState } from '../../hooks/useUIState';
+import { useUIState } from '../../hooks/ui/useUIState';
 
 describe('useUIState', () => {
   it('inicia con valores por defecto', () => {

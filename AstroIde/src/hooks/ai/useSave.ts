@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import type * as Monaco from 'monaco-editor';
-import type { Tab, AppSettings } from '../types';
-import * as api from '../services/tauri';
+import type { Tab, AppSettings } from '../../types';
+import * as api from '../../services/tauri';
 
 interface UseSaveOptions {
   activeTab: Tab | null;

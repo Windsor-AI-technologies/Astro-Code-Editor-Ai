@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import * as dbg from '../services/debugger';
-import type { Breakpoint, CallFrame, Variable, DebugState, DebugEvent } from '../services/debugger';
+import * as dbg from '../../services/debugger';
+import type { Breakpoint, CallFrame, Variable, DebugState, DebugEvent } from '../../services/debugger';
 
 export type { Breakpoint, CallFrame, Variable, DebugState };
 

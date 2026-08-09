@@ -3,7 +3,7 @@ import {
   Play, Square, Pause, SkipForward, ArrowDownToLine, ArrowUpFromLine,
   RotateCcw, Circle, ChevronRight, ChevronDown, X, Terminal as TermIcon
 } from 'lucide-react';
-import type { Breakpoint, CallFrame, Variable, DebugState } from '../../../hooks/useDebugger';
+import type { Breakpoint, CallFrame, Variable, DebugState } from '../../../hooks/debug/useDebugger';
 import './DebugPanel.css';
 
 interface DebugPanelProps {

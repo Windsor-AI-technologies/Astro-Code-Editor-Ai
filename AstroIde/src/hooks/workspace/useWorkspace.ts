@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
-import type { FileEntry } from '../types';
-import * as api from '../services/tauri';
-import { disposeAllCompletionProviders } from '../utils/completions';
-import { clearDocumentVersions } from '../services/lsp-monaco-bridge';
+import type { FileEntry } from '../../types';
+import * as api from '../../services/tauri';
+import { disposeAllCompletionProviders } from '../../utils/completions';
+import { clearDocumentVersions } from '../../services/lsp-monaco-bridge';
 import { loader } from '@monaco-editor/react';
 
 /**

@@ -1,8 +1,8 @@
 import { useState, useRef, useCallback } from 'react';
 import type * as Monaco from 'monaco-editor';
-import type { Tab } from '../types';
-import { getLanguageFromPath } from '../utils/language';
-import * as api from '../services/tauri';
+import type { Tab } from '../../types';
+import { getLanguageFromPath } from '../../utils/language';
+import * as api from '../../services/tauri';
 
 let tabIdCounter = 0;
 function newTabId() { return `tab-${++tabIdCounter}`; }
@@ -18,6 +18,7 @@ function newTabId() { return `tab-${++tabIdCounter}`; }
 export function useTabs(editorRef: React.MutableRefObject<Monaco.editor.IStandaloneCodeEditor | null>) {
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
+  const [diffPreview, setDiffPreview] = useState<{ added: number[]; removed: number[] } | null>(null);
   const dirtySetRef = useRef(new Set<string>());
 
   const activeTab = tabs.find(t => t.id === activeTabId) ?? null;
@@ -148,6 +149,8 @@ export function useTabs(editorRef: React.MutableRefObject<Monaco.editor.IStandal
     activeTab,
     dirtySetRef,
     setTabs,
+    diffPreview,
+    setDiffPreview,
     openFile,
     newFile,
     closeTab,

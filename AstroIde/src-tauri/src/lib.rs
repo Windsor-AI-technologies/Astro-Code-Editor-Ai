@@ -406,7 +406,21 @@ pub fn run() {
             extensions::ext_uninstall,
             extensions::ext_list_installed,
             extensions::ext_set_enabled,
+            ai_chat,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+// ── AI Proxy (hace requests HTTP desde Rust para evitar restricciones del webview) ──
+
+#[tauri::command]
+fn ai_chat(url: String, body: String, auth_header: String) -> Result<String, String> {
+    let response = ureq::post(&url)
+        .set("Content-Type", "application/json")
+        .set("Authorization", &auth_header)
+        .send_string(&body)
+        .map_err(|e| format!("Error: {}", e))?;
+
+    response.into_string().map_err(|e| e.to_string())
 }

@@ -7,6 +7,7 @@ import EditorSlot from './components/layout/slots/EditorSlot';
 import TerminalSlot from './components/layout/slots/TerminalSlot';
 import StatusBarSlot from './components/layout/slots/StatusBarSlot';
 import PalettesSlot from './components/layout/slots/PalettesSlot';
+import Notification from './components/ui/Notification/Notification';
 
 /**
  * AppLayout — Pure layout composition.
@@ -33,6 +34,7 @@ export default function AppLayout() {
       <TerminalSlot />
       <StatusBarSlot />
       <PalettesSlot />
+      <Notification />
     </div>
   );
 }

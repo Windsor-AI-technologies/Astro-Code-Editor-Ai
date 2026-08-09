@@ -10,7 +10,7 @@ import SettingsPanel from '../../../features/settings/SettingsPanel/SettingsPane
 
 export default function EditorSlot() {
   const { rootPath } = useWorkspaceCtx();
-  const { tabs, activeTab, displayActiveId, editorRef, selectTab, closeTab, markDirty, changeLanguage } = useTabsCtx();
+  const { tabs, activeTab, displayActiveId, editorRef, selectTab, closeTab, markDirty, changeLanguage, diffPreview, setDiffPreview } = useTabsCtx();
   const { settings, setSettings, settingsOpen, toggleSettings, themeId } = useSettingsCtx();
   const debug = useDebugCtx();
 
@@ -36,6 +36,9 @@ export default function EditorSlot() {
               pausedLine={debug.pausedLine}
               pausedFile={debug.pausedFile}
               onToggleBreakpoint={debug.toggleBreakpoint}
+              diffPreview={diffPreview}
+              onAcceptDiff={() => setDiffPreview(null)}
+              onDiscardDiff={() => setDiffPreview(null)}
             />
           </div>
         </div>

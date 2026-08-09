@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Search, Terminal } from "lucide-react";
 import type * as Monaco from "monaco-editor";
+import { getAllActions } from "../../../services/core/actionRegistry";
 import "./EditorCommandPalette.css";
 
 interface EditorAction {
@@ -140,7 +141,20 @@ export default function EditorCommandPalette({
       ...editorActions.filter((a) => !customIds.has(a.id) && a.label !== a.id),
     ];
 
-    setActions(merged);
+    // Agregar acciones del Action Registry (core + extensiones)
+    const registryActions = getAllActions().map(a => ({
+      id: a.id,
+      label: `${a.category ? a.category + ': ' : ''}${a.title}`,
+      keybinding: a.shortcut,
+    }));
+
+    const allIds = new Set(merged.map(a => a.id));
+    const final = [
+      ...registryActions.filter(a => !allIds.has(a.id)),
+      ...merged,
+    ];
+
+    setActions(final);
     setSearch("");
     setSelectedIndex(0);
     setTimeout(() => inputRef.current?.focus(), 50);
@@ -161,9 +175,17 @@ export default function EditorCommandPalette({
 
   function handleRun(action: EditorAction) {
     const editor = editorRef.current;
-    if (!editor) return;
 
-    // Acciones especiales
+    // Primero intentar ejecutar desde el Action Registry
+    const registryAction = getAllActions().find(a => a.id === action.id);
+    if (registryAction) {
+      registryAction.run();
+      onClose();
+      return;
+    }
+
+    // Fallback: acciones de Monaco
+    if (!editor) return;
     if (action.id === "undo") {
       editor.trigger("palette", "undo", null);
     } else if (action.id === "redo") {

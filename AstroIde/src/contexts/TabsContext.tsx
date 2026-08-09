@@ -13,6 +13,9 @@ export interface TabsContextValue {
   newFile: () => void;
   markDirty: () => void;
   changeLanguage: (lang: string) => void;
+  // Inline diff
+  diffPreview: { added: number[]; removed: number[] } | null;
+  setDiffPreview: (d: { added: number[]; removed: number[] } | null) => void;
 }
 
 export const TabsContext = createContext<TabsContextValue>(null!);

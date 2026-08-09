@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { AppSettings } from '../types';
-import { DEFAULT_SETTINGS } from '../types';
-import { applyTheme } from '../themes';
-import * as api from '../services/tauri';
+import type { AppSettings } from '../../types';
+import { DEFAULT_SETTINGS } from '../../types';
+import { applyTheme } from '../../themes';
+import * as api from '../../services/tauri';
 
 /**
  * Settings store — manages app settings lifecycle.

@@ -35,13 +35,19 @@ interface CodeEditorProps {
   pausedLine?: number | null;
   pausedFile?: string | null;
   onToggleBreakpoint?: (file: string, line: number) => void;
+  // Inline diff preview
+  diffPreview?: { added: number[]; removed: number[] } | null;
+  onAcceptDiff?: () => void;
+  onDiscardDiff?: () => void;
 }
 
 export default function CodeEditor({
   tab, settings, themeId, onChange, onLanguageChange, editorRef, rootPath,
   breakpoints = [], pausedLine = null, pausedFile = null, onToggleBreakpoint,
+  diffPreview = null, onAcceptDiff, onDiscardDiff,
 }: CodeEditorProps) {
   const monacoRef = useRef<any>(null);
+  const diffDecorationsRef = useRef<string[]>([]);
   const decorationsRef = useRef<string[]>([]);
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number } | null>(null);
   const [cmdPaletteVisible, setCmdPaletteVisible] = useState(false);
@@ -215,6 +221,51 @@ export default function CodeEditor({
     decorationsRef.current = editor.deltaDecorations(decorationsRef.current, newDecorations);
   }, [breakpoints, pausedLine, pausedFile, tab?.path]);
 
+  // ── Inline diff decorations (green/red in editor) ─────────────────────
+  useEffect(() => {
+    const editor = editorRef.current;
+    const monaco = monacoRef.current;
+    if (!editor || !monaco) {
+      return;
+    }
+
+    if (!diffPreview) {
+      // Clear diff decorations
+      diffDecorationsRef.current = editor.deltaDecorations(diffDecorationsRef.current, []);
+      return;
+    }
+
+    const newDecorations: any[] = [];
+
+    // Green lines (added)
+    for (const line of diffPreview.added) {
+      newDecorations.push({
+        range: new monaco.Range(line, 1, line, 1),
+        options: {
+          isWholeLine: true,
+          className: 'diff-line-added',
+          glyphMarginClassName: 'diff-glyph-added',
+          overviewRuler: { color: '#73c991', position: 1 },
+        },
+      });
+    }
+
+    // Red lines (removed — shown as margin marker since content is already gone)
+    for (const line of diffPreview.removed) {
+      newDecorations.push({
+        range: new monaco.Range(line, 1, line, 1),
+        options: {
+          isWholeLine: true,
+          className: 'diff-line-removed',
+          glyphMarginClassName: 'diff-glyph-removed',
+          overviewRuler: { color: '#f48771', position: 1 },
+        },
+      });
+    }
+
+    diffDecorationsRef.current = editor.deltaDecorations(diffDecorationsRef.current, newDecorations);
+  }, [diffPreview]);
+
   if (!tab) {
     return (
       <div className="editor-welcome">
@@ -258,6 +309,13 @@ export default function CodeEditor({
 
   return (
     <div className="code-editor-wrapper">
+      {diffPreview && onAcceptDiff && onDiscardDiff && (
+        <div className="diff-toolbar">
+          <span className="diff-toolbar-label">Cambios del AI — {diffPreview.added.length} agregadas, {diffPreview.removed.length} eliminadas</span>
+          <button className="diff-toolbar-btn diff-toolbar-accept" onClick={onAcceptDiff}>Aceptar</button>
+          <button className="diff-toolbar-btn diff-toolbar-discard" onClick={onDiscardDiff}>Descartar</button>
+        </div>
+      )}
       <MonacoEditor
         height="100%"
         language={tab.language}

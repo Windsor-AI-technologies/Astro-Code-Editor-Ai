@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type * as Monaco from 'monaco-editor';
-import type { Tab } from '../types';
-import * as api from '../services/tauri';
+import type { Tab } from '../../types';
+import * as api from '../../services/tauri';
 
 interface UseAutoSaveOptions {
   tabs: Tab[];

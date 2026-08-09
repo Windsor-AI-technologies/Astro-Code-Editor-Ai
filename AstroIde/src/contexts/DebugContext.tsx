@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { Breakpoint, CallFrame, Variable, DebugState } from '../hooks/useDebugger';
+import type { Breakpoint, CallFrame, Variable, DebugState } from '../hooks/debug/useDebugger';
 
 export interface DebugContextValue {
   // State

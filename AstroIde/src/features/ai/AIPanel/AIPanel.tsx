@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Trash2, PanelRightClose, Copy, Check } from "lucide-react";
-import type { AIMode, AIMessage } from "../../../types";
-import { AI_MODES, AI_MODELS } from "../../../types";
+import { Send, Trash2, PanelRightClose, Copy, Check, Key, CheckCheck, X } from "lucide-react";
+import type * as Monaco from "monaco-editor";
+import type { AIMode, AIMessage } from "../../../types/ai_models";
+import { AI_MODES, AI_MODELS } from "../../../types/ai_models";
+import { sendMessage, setApiKey, hasApiKey } from "../../../services/ai";
+import { useTabsCtx } from "../../../contexts/TabsContext";
 import BlackHoleIcon from "./iconAstro/iconsAstro";
 import "./AIPanel.css";
 
-
-// SVG Icono de agujero negro
 
 // Bloque de código con syntax highlighting visual y botón copiar
 function CodeBlock({ code, lang }: { code: string; lang: string }) {
@@ -577,13 +578,118 @@ function renderInline(text: string) {
   return parts.length > 0 ? parts : text;
 }
 
-interface AIPanelProps {
-  visible: boolean;
+// ── Diff View Component ───────────────────────────────────────────────────────
+
+function DiffView({ diff, onAccept, onDiscard }: {
+  diff: ParsedDiff;
+  onAccept: () => void;
+  onDiscard: () => void;
+}) {
+  const added = diff.lines.filter(l => l.type === 'add').length;
+  const removed = diff.lines.filter(l => l.type === 'del').length;
+
+  return (
+    <div className="ai-diff-panel">
+      <div className="ai-diff-header">
+        <span className="ai-diff-title">Cambios propuestos</span>
+        <div className="ai-diff-stats">
+          <span className="ai-diff-added">+{added}</span>
+          <span className="ai-diff-removed">-{removed}</span>
+        </div>
+      </div>
+      <div className="ai-diff-lines">
+        {diff.lines.map((line, i) => (
+          <div key={i} className={`ai-diff-line ai-diff-line-${line.type}`}>
+            <span className="ai-diff-symbol">
+              {line.type === 'add' ? '+' : line.type === 'del' ? '-' : ' '}
+            </span>
+            <span className="ai-diff-content">{line.content}</span>
+          </div>
+        ))}
+      </div>
+      <div className="ai-diff-actions">
+        <button className="ai-diff-accept" onClick={onAccept}>
+          <CheckCheck size={13} /> Aceptar
+        </button>
+        <button className="ai-diff-discard" onClick={onDiscard}>
+          <X size={13} /> Descartar
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Diff Types & Parser ───────────────────────────────────────────────────────
+
+interface DiffLine {
+  type: 'add' | 'del' | 'ctx';
+  content: string;
+}
+
+interface ParsedDiff {
+  lines: DiffLine[];
+  newContent: string;
+}
+
+function parseDiff(aiResponse: string, originalContent: string): ParsedDiff | null {
+  // 1. Try unified diff format first
+  const diffMatch = aiResponse.match(/```diff\n([\s\S]*?)```/);
+  if (diffMatch) {
+    const rawDiff = diffMatch[1];
+    const diffLines = rawDiff.split('\n');
+    const lines: DiffLine[] = [];
+
+    for (const line of diffLines) {
+      if (line.startsWith('---') || line.startsWith('+++') || line.startsWith('@@')) continue;
+      if (line.startsWith('+')) lines.push({ type: 'add', content: line.slice(1) });
+      else if (line.startsWith('-')) lines.push({ type: 'del', content: line.slice(1) });
+      else lines.push({ type: 'ctx', content: line.startsWith(' ') ? line.slice(1) : line });
+    }
+
+    if (lines.length === 0) return null;
+
+    const newLines: string[] = [];
+    for (const l of lines) {
+      if (l.type !== 'del') newLines.push(l.content);
+    }
+
+    return { lines, newContent: newLines.join('\n') || originalContent };
+  }
+
+  // 2. Fallback: detect any code block and use as full replacement
+  const codeMatch = aiResponse.match(/```\w*\n([\s\S]*?)```/);
+  if (codeMatch && codeMatch[1].trim().length > 10) {
+    const newContent = codeMatch[1].trimEnd();
+    
+    // If original is empty/whitespace, everything is "added"
+    if (!originalContent.trim()) {
+      const addedLines = newContent.split('\n');
+      const lines: DiffLine[] = addedLines.map(l => ({ type: 'add', content: l }));
+      return { lines, newContent };
+    }
+
+    // Simple comparison: mark all original as removed, all new as added
+    const origLines = originalContent.split('\n');
+    const newLines = newContent.split('\n');
+    const lines: DiffLine[] = [
+      ...origLines.map(l => ({ type: 'del' as const, content: l })),
+      ...newLines.map(l => ({ type: 'add' as const, content: l })),
+    ];
+
+    return { lines, newContent };
+  }
+
+  return null;
+}
+
+interface AIPanelProps {  visible: boolean;
   onToggle: () => void;
   width: number;
   onResizeStart: (e: React.MouseEvent) => void;
   activeFilePath: string | null;
+  activeFileContent?: string | null;
   acrylic: boolean;
+  editorRef?: React.MutableRefObject<Monaco.editor.IStandaloneCodeEditor | null>;
 }
 
 let msgId = 0;
@@ -597,13 +703,19 @@ export default function AIPanel({
   width,
   onResizeStart: _onResizeStart,
   activeFilePath,
+  activeFileContent,
   acrylic,
+  editorRef,
 }: AIPanelProps) {
+  const { setDiffPreview } = useTabsCtx();
   const [mode, setMode] = useState<AIMode>("ask");
-  const [model, setModel] = useState<string>("gpt-4o");
+  const [model, setModel] = useState<string>("groq-llama3");
   const [messages, setMessages] = useState<AIMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [apiKeyInput, setApiKeyInput] = useState("");
+  const [showKeyInput, setShowKeyInput] = useState(false);
+  const [pendingDiff, setPendingDiff] = useState<ParsedDiff | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -620,6 +732,12 @@ export default function AIPanel({
   async function handleSend() {
     if (!input.trim() || isLoading) return;
 
+    // Check API key
+    if (!hasApiKey(model)) {
+      setShowKeyInput(true);
+      return;
+    }
+
     const userMsg: AIMessage = {
       id: newMsgId(),
       role: "user",
@@ -629,38 +747,84 @@ export default function AIPanel({
       model,
     };
 
-    setMessages((prev) => [...prev, userMsg]);
+    const allMessages = [...messages, userMsg];
+    setMessages(allMessages);
     setInput("");
     setIsLoading(true);
     if (inputRef.current) inputRef.current.style.height = "auto";
 
-    // Respuesta simulada (placeholder para API real)
-    setTimeout(
-      () => {
-        const modelName = AI_MODELS.find((m) => m.id === model)?.name || "AI";
-        let response = "";
+    // Streaming placeholder message
+    const aiMsgId = newMsgId();
+    setMessages(prev => [...prev, {
+      id: aiMsgId,
+      role: "assistant",
+      content: "",
+      timestamp: Date.now(),
+      mode,
+      model,
+    }]);
 
-        if (mode === "engineer") {
-          response = `Analizando código...\n\nAquí tienes la solución:\n\n\`\`\`typescript\nfunction hello(name: string): string {\n  // Saludo personalizado\n  const greeting = \`Hola, \${name}!\`;\n  return greeting;\n}\n\nexport default hello;\n\`\`\`\n\nEsto define una función tipada que retorna un saludo.`;
-        } else if (mode === "plan") {
-          response = `## Plan\n\n1. Analizar el contexto actual\n2. Identificar dependencias\n3. Implementar solución\n4. Verificar resultado\n\n${activeFilePath ? `> Archivo: ${activeFilePath.split(/[\\/]/).pop()}` : ""}`;
-        } else {
-          response = `Hola! Soy **Astro Black Hole** usando ${modelName}.\n\nEsto es un placeholder. Para activar IA real, conecta tu API key en configuración.\n\n${activeFilePath ? `📄 Veo que tienes abierto: \`${activeFilePath.split(/[\\/]/).pop()}\`` : "Abre un archivo para dar contexto."}`;
+    try {
+      let fullContent = '';
+      await sendMessage({
+        modelId: model,
+        messages: allMessages,
+        mode,
+        activeFilePath,
+        activeFileContent: (mode === 'engineer' || mode === 'plan') ? activeFileContent : null,
+        onChunk: (chunk) => {
+          fullContent += chunk;
+          setMessages(prev => prev.map(m =>
+            m.id === aiMsgId ? { ...m, content: m.content + chunk } : m
+          ));
+        },
+      });
+
+      // Parse diff if engineer/plan mode and file is open
+      if ((mode === 'engineer' || mode === 'plan') && activeFilePath) {
+        const currentContent = editorRef?.current?.getValue() ?? activeFileContent ?? '';
+        const diff = parseDiff(fullContent, currentContent);
+        if (diff && diff.lines.length > 0) {
+          setPendingDiff(diff);
+          const added: number[] = [];
+          const removed: number[] = [];
+          let addLine = 1;
+          for (const l of diff.lines) {
+            if (l.type === 'add') { added.push(addLine); addLine++; }
+            else if (l.type === 'del') { removed.push(addLine); }
+            else { addLine++; }
+          }
+          if (added.length > 0 || removed.length > 0) {
+            setDiffPreview({ added, removed });
+          }
         }
+      }
+    } catch (e) {
+      setMessages(prev => prev.map(m =>
+        m.id === aiMsgId
+          ? { ...m, content: `Error: ${e}` }
+          : m
+      ));
+    }
 
-        const aiMsg: AIMessage = {
-          id: newMsgId(),
-          role: "assistant",
-          content: response,
-          timestamp: Date.now(),
-          mode,
-          model,
-        };
-        setMessages((prev) => [...prev, aiMsg]);
-        setIsLoading(false);
-      },
-      600 + Math.random() * 500,
-    );
+    setIsLoading(false);
+  }
+
+  function handleSaveKey() {
+    if (!apiKeyInput.trim()) return;
+    // Determine provider from model
+    const providerMap: Record<string, string> = {
+      'deepseek-r1': 'deepseek', 'deepseek-v3': 'deepseek',
+      'gpt-4o': 'openai', 'gpt-4o-mini': 'openai',
+      'claude-4-sonnet': 'anthropic', 'claude-4-opus': 'anthropic',
+      'gemini-2.5-pro': 'google', 'gemini-2.0-flash': 'google',
+      'groq-llama3': 'groq', 'groq-deepseek-r1': 'groq',
+      'cerebras-glm': 'cerebras', 'cerebras-gemma': 'cerebras', 'cerebras-gpt-oss': 'cerebras',
+    };
+    const provider = providerMap[model] ?? model;
+    setApiKey(provider, apiKeyInput.trim());
+    setApiKeyInput("");
+    setShowKeyInput(false);
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -668,6 +832,20 @@ export default function AIPanel({
       e.preventDefault();
       handleSend();
     }
+  }
+
+  function handleAcceptDiff() {
+    if (!pendingDiff || !editorRef?.current) return;
+    // AHORA sí aplicar los cambios al editor
+    editorRef.current.setValue(pendingDiff.newContent);
+    setDiffPreview(null);
+    setPendingDiff(null);
+  }
+
+  function handleDiscardDiff() {
+    // No tocar el editor — el contenido original sigue intacto
+    setDiffPreview(null);
+    setPendingDiff(null);
   }
 
   if (!visible) return null;
@@ -736,7 +914,7 @@ export default function AIPanel({
             <p>Tu asistente de codigo con IA</p>
             <div className="ai-empty-modes">
               {AI_MODES.map((m) => (
-                <div key={m.id} className="ai-empty-mode">
+                <div key={m.id} className="ai-empty-mode" onClick={() => { setMode(m.id); inputRef.current?.focus(); }}>
                   <span>{m.icon}</span>
                   <div>
                     <strong>{m.name}</strong>
@@ -761,22 +939,47 @@ export default function AIPanel({
           </div>
         ))}
 
-        {isLoading && (
+        {isLoading && messages[messages.length - 1]?.content === '' && (
           <div className="ai-msg ai-msg-assistant">
-            <div className="ai-msg-avatar">
-              <BlackHoleIcon size={16} />
-            </div>
+            <div className="ai-msg-avatar"><BlackHoleIcon size={16} /></div>
             <div className="ai-msg-bubble">
-              <div className="ai-typing">
-                <span />
-                <span />
-                <span />
-              </div>
+              <div className="ai-typing"><span /><span /><span /></div>
             </div>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Pending diff */}
+      {pendingDiff && (
+        <DiffView
+          diff={pendingDiff}
+          onAccept={handleAcceptDiff}
+          onDiscard={handleDiscardDiff}
+        />
+      )}
+
+      {/* API Key input */}
+      {showKeyInput && (
+        <div className="ai-key-input-area">
+          <div className="ai-key-label">
+            <Key size={11} /> API Key para {AI_MODELS.find(m => m.id === model)?.provider}
+          </div>
+          <div className="ai-key-row">
+            <input
+              className="ai-key-input"
+              type="password"
+              placeholder="sk-..."
+              value={apiKeyInput}
+              onChange={e => setApiKeyInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleSaveKey(); if (e.key === 'Escape') setShowKeyInput(false); }}
+              autoFocus
+            />
+            <button className="ai-key-save-btn" onClick={handleSaveKey}>Guardar</button>
+          </div>
+          <div className="ai-key-hint">La key se guarda solo en memoria, no en disco.</div>
+        </div>
+      )}
 
       {/* Input */}
       <div className="ai-input-area">
@@ -792,7 +995,7 @@ export default function AIPanel({
           <textarea
             ref={inputRef}
             className="ai-input"
-            placeholder="Pregunta a Astro..."
+            placeholder={mode === 'engineer' ? "Describe qué quieres que haga..." : mode === 'plan' ? "Describe qué quieres planificar..." : "Pregunta lo que necesites..."}
             value={input}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}

@@ -134,8 +134,8 @@
 }
 
 .ai-mode-btn.active {
-  background: var(--accent);
-  color: var(--accent-fg);
+  background: var(--bg-3);
+  color: var(--text-primary);
   font-weight: 600;
 }
 
@@ -277,28 +277,39 @@
 }
 
 .ai-empty-modes {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
   width: 100%;
   text-align: left;
-  margin-top: 8px;
+  margin-top: 12px;
 }
 
 .ai-empty-mode {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 6px 8px;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  padding: 12px 8px;
   border-radius: var(--radius-sm);
   background: var(--bg-3);
   font-size: 11px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
   opacity: 0;
   transform: translateY(10px);
   animation: ai-fade-up 0.6s ease-in-out forwards;
 }
 
 .ai-empty-mode:nth-child(1) { animation-delay: 2.8s; }
+.ai-empty-mode:nth-child(2) { animation-delay: 3s; }
+.ai-empty-mode:nth-child(3) { animation-delay: 3.2s; }
+
+.ai-empty-mode:hover {
+  background: var(--bg-hover);
+  transform: translateY(-2px);
+}
 .ai-empty-mode:nth-child(2) { animation-delay: 4.1s; }
 .ai-empty-mode:nth-child(3) { animation-delay: 4.4s; }
 
@@ -369,7 +380,7 @@
 }
 
 .ai-msg-user .ai-msg-bubble {
-  background: var(--accent);
+  background: var(--bg-3);
   color: var(--accent-fg);
   border-radius: var(--radius) var(--radius) 2px var(--radius);
 }
@@ -612,3 +623,169 @@
 .ai-code-pre .hl-function {
   color: var(--accent-hover);
 }
+
+/* ── API Key Input ──────────────────────────────────────────────────────── */
+.ai-key-input-area {
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-2);
+}
+
+.ai-key-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.ai-key-row {
+  display: flex;
+  gap: 6px;
+}
+
+.ai-key-input {
+  flex: 1;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 12px;
+  padding: 4px 8px;
+  outline: none;
+}
+
+.ai-key-input:focus {
+  border-color: var(--accent);
+}
+
+.ai-key-save-btn {
+  background: var(--accent);
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 11px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.ai-key-save-btn:hover { opacity: 0.85; }
+
+.ai-key-hint {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+/* ── Diff Panel ─────────────────────────────────────────────────────────── */
+.ai-diff-panel {
+  border-top: 1px solid var(--border);
+  background: var(--bg-2);
+  flex-shrink: 0;
+  max-height: 250px;
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-diff-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ai-diff-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ai-diff-stats {
+  display: flex;
+  gap: 6px;
+  font-size: 10px;
+  font-family: monospace;
+}
+
+.ai-diff-added { color: #73c991; }
+.ai-diff-removed { color: #f48771; }
+
+.ai-diff-lines {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.ai-diff-line {
+  display: flex;
+  padding: 0 8px;
+  font-size: 11px;
+  font-family: var(--font-mono, monospace);
+  line-height: 1.6;
+}
+
+.ai-diff-line-add {
+  background: rgba(73, 199, 145, 0.12);
+  color: #73c991;
+}
+
+.ai-diff-line-del {
+  background: rgba(244, 135, 113, 0.12);
+  color: #f48771;
+}
+
+.ai-diff-line-ctx {
+  color: var(--text-dim);
+}
+
+.ai-diff-symbol {
+  width: 14px;
+  flex-shrink: 0;
+  text-align: center;
+  opacity: 0.6;
+}
+
+.ai-diff-content {
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.ai-diff-actions {
+  display: flex;
+  gap: 8px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--border);
+}
+
+.ai-diff-accept {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  background: #73c991;
+  color: #000;
+  border: none;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ai-diff-accept:hover { opacity: 0.85; }
+
+.ai-diff-discard {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.ai-diff-discard:hover { color: #f48771; border-color: #f48771; }

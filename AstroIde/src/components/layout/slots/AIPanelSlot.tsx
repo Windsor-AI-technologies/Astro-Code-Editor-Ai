@@ -11,7 +11,7 @@ interface AIPanelSlotProps {
 
 export default function AIPanelSlot({ position }: AIPanelSlotProps) {
   const { rootPath } = useWorkspaceCtx();
-  const { activeTab } = useTabsCtx();
+  const { activeTab, editorRef } = useTabsCtx();
   const { settings } = useSettingsCtx();
   const { aiPanelVisible, toggleAI } = useUICtx();
   const { onAiResize } = useActionsCtx();
@@ -27,7 +27,10 @@ export default function AIPanelSlot({ position }: AIPanelSlotProps) {
         key={`ai-${position}-${rootPath ?? ''}`}
         visible={aiPanelVisible} onToggle={toggleAI}
         width={settings['workbench.aiPanelWidth']} onResizeStart={onAiResize}
-        activeFilePath={activeTab?.path ?? null} acrylic={settings['workbench.acrylic']}
+        activeFilePath={activeTab?.path ?? null}
+        activeFileContent={activeTab?.content ?? null}
+        acrylic={settings['workbench.acrylic']}
+        editorRef={editorRef}
       />
       {position === 'left' && aiPanelVisible && (
         <div className="ai-resize-handle" onMouseDown={onAiResize} />

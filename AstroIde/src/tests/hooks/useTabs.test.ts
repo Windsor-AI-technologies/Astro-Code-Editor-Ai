@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useTabs } from '../../hooks/useTabs';
+import { useTabs } from '../../hooks/editor/useTabs';
 
 vi.mock('../../services/tauri', () => ({
   readFile: vi.fn(() => Promise.resolve('file content')),

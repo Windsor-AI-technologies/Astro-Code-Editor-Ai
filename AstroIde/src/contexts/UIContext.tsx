@@ -24,6 +24,9 @@ export interface UIContextValue {
   cursorPos: { line: number; column: number };
   statusMessage: string | null;
   showMessage: (msg: string) => void;
+  // Notifications
+  notification: string | null;
+  showNotification: (msg: string, ms?: number) => void;
 }
 
 export const UIContext = createContext<UIContextValue>(null!);

@@ -3,6 +3,7 @@ param(
 )
 
 function Start-Build {
+    cls
     Write-Host " Compilando Astro Editor (release optimizado)..." -ForegroundColor Yellow
     Write-Host ""
     # Asegurar que estamos en el directorio del proyecto

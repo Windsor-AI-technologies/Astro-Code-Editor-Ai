@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
-import type { VSXExtension, InstalledExtension, ExtensionInstallStatus } from '../types';
-import * as api from '../services/tauri';
+import type { VSXExtension, InstalledExtension, ExtensionInstallStatus } from '../../types';
+import * as api from '../../services/tauri';
 
 /**
  * useExtensions — manages the extensions marketplace and installed extensions.

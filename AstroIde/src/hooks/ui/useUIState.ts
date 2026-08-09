@@ -20,6 +20,14 @@ export function useUIState() {
     setTimeout(() => setStatusMessage(null), ms);
   }, []);
 
+  // Notificaciones (toast) — más visibles que statusMessage
+  const [notification, setNotification] = useState<string | null>(null);
+
+  const showNotification = useCallback((msg: string, ms = 3000) => {
+    setNotification(msg);
+    setTimeout(() => setNotification(null), ms);
+  }, []);
+
   const toggleTerminal = useCallback(() => setTerminalVisible(v => !v), []);
   const toggleAI = useCallback(() => setAiPanelVisible(v => !v), []);
   const toggleSidebar = useCallback(() => setSidebarVisible(v => !v), []);
@@ -43,5 +51,7 @@ export function useUIState() {
     cursorPos, setCursorPos,
     // Status
     statusMessage, showMessage,
+    // Notifications
+    notification, showNotification,
   };
 }

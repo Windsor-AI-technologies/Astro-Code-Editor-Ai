@@ -148,3 +148,76 @@ kbd {
   background: rgba(255, 204, 0, 0.12) !important;
   border-left: 2px solid #ffcc00;
 }
+
+/* ─── Inline Diff Decorations ────────────────────────────────────────── */
+
+.diff-line-added {
+  background: rgba(73, 199, 145, 0.15) !important;
+  border-left: 3px solid #73c991 !important;
+}
+
+.diff-line-removed {
+  background: rgba(244, 135, 113, 0.15) !important;
+  border-left: 3px solid #f48771 !important;
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.diff-glyph-added {
+  background: #73c991;
+  width: 4px !important;
+  margin-left: 3px;
+  border-radius: 2px;
+}
+
+.diff-glyph-removed {
+  background: #f48771;
+  width: 4px !important;
+  margin-left: 3px;
+  border-radius: 2px;
+}
+
+/* Diff accept/discard toolbar above editor */
+.diff-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.diff-toolbar-label {
+  flex: 1;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.diff-toolbar-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border: none;
+  border-radius: 3px;
+  font-size: 11px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.diff-toolbar-accept {
+  background: #73c991;
+  color: #000;
+}
+
+.diff-toolbar-accept:hover { opacity: 0.85; }
+
+.diff-toolbar-discard {
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+}
+
+.diff-toolbar-discard:hover { color: #f48771; border-color: #f48771; }

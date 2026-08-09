@@ -117,3 +117,56 @@
 - El marketplace (fetch remoto) viene OFF por defecto — solo se ve lo local
 - Para activar el marketplace el usuario lo habilita en su fork
 - Cada feature se implementa en su propia sesion
+
+---
+
+## 8. Backend + Autenticación + AI como servicio
+
+### Objetivo
+- Cada usuario inicia sesión en AstroIde
+- Las llamadas a AI van al backend propio (no directo a Groq/DeepSeek)
+- El backend usa UNA sola API key (la tuya) para todos los usuarios
+- Los usuarios no necesitan su propia key
+
+### Flujo
+```
+App (Tauri) → Tu backend → Groq/DeepSeek → Tu backend → App
+```
+
+### Features
+- Login / registro de usuarios
+- El backend actúa como proxy de AI (protege la key)
+- Límites de uso por usuario (rate limiting)
+- Modelos propios de Astro IDE (branding)
+- Posibilidad de monetizar uso premium
+
+### Stack sugerido
+- Backend: Rust (Axum) o Node.js (Fastify)
+- Auth: JWT + refresh tokens
+- DB: PostgreSQL o SQLite para empezar
+- Deploy: VPS propio o Railway/Fly.io
+
+---
+
+## 9. Git Integration Real (con GitLens-lite)
+
+### Enfoque: Lazy + bajo demanda (0 RAM cuando no se usa)
+
+### Fase 1 — Git básico
+- Status de archivos (modified, staged, untracked)
+- Commit, push, pull desde la UI
+- Branch management (crear, cambiar, merge)
+- Todo via `Command::new("git")` desde Rust — sin librerías extra
+
+### Fase 2 — GitLens-lite (blame + grafo)
+- Blame inline: solo cuando el usuario hace hover en una línea (no precarga)
+- Grafo de ramas: solo últimas 50 commits, SVG simple
+- Historial de archivo: bajo demanda al abrir el panel
+- Contribuidores: `git shortlog` al abrir
+
+### Reglas de memoria
+- Panel cerrado = 0 MB extra
+- Panel abierto = solo los datos visibles en pantalla (~1-2MB max)
+- Al cerrar panel = liberar toda la memoria (mismo patrón que extensiones)
+- NUNCA precargar todo el historial como GitLens
+- NUNCA cachear blame de archivos que no están abiertos

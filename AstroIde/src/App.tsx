@@ -2,17 +2,19 @@ import { useRef, useEffect, useMemo } from "react";
 import type * as Monaco from "monaco-editor";
 import type { TerminalPanelHandle } from "./features/terminal/Terminal/TerminalPanel";
 
-import { useWorkspace } from "./hooks/useWorkspace";
-import { useTabs } from "./hooks/useTabs";
-import { useSettings } from "./hooks/useSettings";
-import { useUIState } from "./hooks/useUIState";
-import { useSave } from "./hooks/useSave";
-import { useEditorActions } from "./hooks/useEditorActions";
-import { useAutoSave } from "./hooks/useAutoSave";
-import { useKeyboard } from "./hooks/useKeyboard";
-import { useResize } from "./hooks/useResize";
-import { useDebugger } from "./hooks/useDebugger";
-import { useExtensions } from "./hooks/useExtensions";
+import { useWorkspace } from "./hooks/workspace/useWorkspace";
+import { useTabs } from "./hooks/editor/useTabs";
+import { useSettings } from "./hooks/settings/useSettings";
+import { useUIState } from "./hooks/ui/useUIState";
+import { useSave } from "./hooks/ai/useSave";
+import { useEditorActions } from "./hooks/editor/useEditorActions";
+import { useAutoSave } from "./hooks/editor/useAutoSave";
+import { useKeyboard } from "./hooks/ui/useKeyboard";
+import { useResize } from "./hooks/ui/useResize";
+import { useDebugger } from "./hooks/debug/useDebugger";
+import { useExtensions } from "./hooks/extensions/useExtensions";
+import { registerCoreActions } from "./services/core/coreActions";
+import { connectNotificationHandler } from "./services/core/astro";
 
 import { WorkspaceContext } from "./contexts/WorkspaceContext";
 import { TabsContext } from "./contexts/TabsContext";
@@ -139,7 +141,7 @@ export default function App() {
     () => settingsStore.settings["workbench.aiPanelWidth"],
     (w) => settingsStore.updateSetting("workbench.aiPanelWidth", w),
     250,
-    600,
+    950,
     settingsStore.settings["workbench.aiPanelPosition"] === "right",
   );
 
@@ -150,6 +152,31 @@ export default function App() {
   useEffect(() => {
     setTimeout(() => editorRef.current?.layout(), 100);
   }, [ui.aiPanelVisible, settingsStore.settings["workbench.aiPanelWidth"]]);
+
+  // ── Register core actions ───────────────────────────────────────────────
+  useEffect(() => {
+    connectNotificationHandler(ui.showNotification);
+    const unregister = registerCoreActions({
+      save,
+      newFile: tabs.newFile,
+      closeTab: () => {
+        if (tabs.activeTabId) handleCloseTab(tabs.activeTabId);
+      },
+      toggleSidebar: ui.toggleSidebar,
+      toggleTerminal: ui.toggleTerminal,
+      toggleAI: ui.toggleAI,
+      toggleSettings: handleToggleSettings,
+      openCommandPalette: () => ui.setCmdPaletteOpen(true),
+      openFolder: () => {},
+      undo: editorActions.undo,
+      redo: editorActions.redo,
+      find: editorActions.find,
+      formatDocument: () =>
+        editorRef.current?.getAction("editor.action.formatDocument")?.run(),
+      showNotification: ui.showNotification,
+    });
+    return unregister;
+  }, [save, tabs.activeTabId]);
 
   // ── Context Values (memoized to prevent unnecessary re-renders) ─────────
   const workspaceCtx = useMemo(
@@ -177,6 +204,8 @@ export default function App() {
       newFile: tabs.newFile,
       markDirty: tabs.markDirty,
       changeLanguage: tabs.changeLanguage,
+      diffPreview: tabs.diffPreview,
+      setDiffPreview: tabs.setDiffPreview,
     }),
     [tabs.tabs, tabs.activeTabId, settingsStore.settingsOpen],
   );
@@ -213,6 +242,8 @@ export default function App() {
       cursorPos: ui.cursorPos,
       statusMessage: ui.statusMessage,
       showMessage: ui.showMessage,
+      notification: ui.notification,
+      showNotification: ui.showNotification,
     }),
     [
       ui.terminalVisible,
