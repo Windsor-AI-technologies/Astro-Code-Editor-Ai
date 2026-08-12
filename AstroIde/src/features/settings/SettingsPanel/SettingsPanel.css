@@ -313,3 +313,27 @@
   font-size: 11px;
   flex-shrink: 0;
 }
+
+/* Account / Sign Out */
+.settings-account {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+}
+
+.settings-signout {
+  width: 100%;
+  padding: 8px 16px;
+  border: 1px solid #f44;
+  border-radius: 8px;
+  background: transparent;
+  color: #f44;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.settings-signout:hover {
+  background: rgba(244, 68, 68, 0.1);
+}

@@ -149,11 +149,9 @@ src/
 ---
 
 ## Roadmap
-
-- [ ] Editor propio (reemplazar Monaco)
 - [ ] LSP async con tokio
-- [ ] Ecosistema de extensiones (temas, iconos, plugins)
+- [x] Ecosistema de extensiones (temas, iconos, plugins)
 - [ ] Git integration funcional
 - [ ] Split view / paneles multiples
-- [ ] AI code completion
+- [x] AI code completion
 - [ ] Soporte remoto (SSH/containers)

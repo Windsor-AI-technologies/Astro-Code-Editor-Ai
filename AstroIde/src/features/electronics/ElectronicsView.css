@@ -1,0 +1,173 @@
+/* ── Electronics View ───────────────────────────────────────────────────── */
+
+.electronics-view {
+  display: flex;
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Sidebar */
+.elec-sidebar {
+  width: 200px;
+  background: var(--bg-0);
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+
+.elec-sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+}
+
+.elec-comp-list {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.elec-comp {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  font-size: 11px;
+  color: var(--text-primary);
+  border-radius: 4px;
+  cursor: grab;
+}
+
+.elec-comp:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* Canvas */
+.elec-canvas {
+  flex: 1;
+  background: var(--bg-1);
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.elec-canvas-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.elec-placeholder {
+  text-align: center;
+  color: var(--text-dim);
+}
+
+.elec-placeholder-icon {
+  color: #4ec9b0;
+  opacity: 0.6;
+  margin-bottom: 12px;
+}
+
+.elec-placeholder h2 {
+  font-size: 18px;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.elec-placeholder p {
+  font-size: 12px;
+}
+
+.elec-hints {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+/* Panel derecho */
+.elec-panel {
+  width: 260px;
+  background: var(--bg-0);
+  border-bottom-right-radius: 10px;
+  border-top-right-radius: 10px;
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+
+.elec-panel-header {
+  padding: 10px 12px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+}
+
+.elec-serial {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.elec-serial-output {
+  flex: 1;
+  padding: 12px;
+  font-family: monospace;
+  font-size: 11px;
+  color: var(--text-dim);
+  overflow-y: auto;
+}
+
+.elec-serial-placeholder {
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+.elec-serial-input {
+  display: flex;
+  gap: 4px;
+  padding: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.elec-serial-input input {
+  flex: 1;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 11px;
+  padding: 4px 8px;
+  outline: none;
+}
+
+.elec-serial-input button {
+  padding: 4px 8px;
+  background: var(--accent);
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 10px;
+  cursor: pointer;
+}

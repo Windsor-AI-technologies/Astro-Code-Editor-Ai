@@ -1,0 +1,62 @@
+/* ── Mode Switcher (titlebar) ───────────────────────────────────────────── */
+
+.mode-switcher {
+    margin-top: 5px;
+  display: flex;
+  align-items: center;
+  background: var(--bg-0);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  /* box-shadow: 0 0 10px var(--text-primary); */
+  padding: 2px;
+  gap: 1px;
+  -webkit-app-region: no-drag;
+  position: relative;
+}
+
+/* Sliding pill indicator */
+.mode-slider {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  background: linear-gradient(var(--text-primary));
+  border-radius: 8px;
+  transform: scale(1.2);
+  box-shadow: 
+    0 0 5px var(--text-primary),
+    0 1px 1px var(--text-primary),
+    inset 0 1px 0 rgb(255, 255, 255),
+    inset 0 -25px 0 rgb(255, 255, 255);
+  transition: left 1s cubic-bezier(0.16, 1, 0.3, 1),
+              width 1s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 0;
+}
+
+.mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  opacity: 0.6;
+  position: relative;
+  z-index: 1;
+}
+
+.mode-btn:hover {
+  opacity: 0.9;
+}
+
+.mode-btn.active {
+  opacity: 1;
+  color:black;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.666);
+  transform: translateY(-1px);
+}

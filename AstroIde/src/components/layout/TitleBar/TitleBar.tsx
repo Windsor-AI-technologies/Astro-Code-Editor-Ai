@@ -29,6 +29,7 @@ interface TitleBarProps {
   trafficLightPosition?: "left" | "right";
   onOpenCommandPalette?: () => void;
   editorCommandPallete?: () => void;
+  modeSwitcher?: React.ReactNode;
 }
 
 export default function TitleBar({
@@ -46,6 +47,7 @@ export default function TitleBar({
   onToggleAI,
   trafficLightPosition = "left",
   onOpenCommandPalette,
+  modeSwitcher,
 }: TitleBarProps) {
   
   const appWindow = getCurrentWindow();
@@ -239,6 +241,7 @@ export default function TitleBar({
     <div className="titlebar" data-tauri-drag-region>
       <div className="titlebar-left" ref={menuRef}>
         {trafficLightPosition === "left" && trafficLights}
+        {trafficLightPosition === "right" && modeSwitcher}
         <svg
           className="titlebar-icon"
           width="18"
@@ -331,6 +334,7 @@ export default function TitleBar({
 
       <div className="titlebar-right">
         {trafficLightPosition === "right" && trafficLights}
+        {trafficLightPosition === "left" && modeSwitcher}
       </div>
     </div>
   );

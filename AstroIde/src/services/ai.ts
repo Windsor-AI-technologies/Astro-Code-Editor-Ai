@@ -1,5 +1,4 @@
 import type { AIMessage, AIMode } from "../types/ai_models";
-import { invoke } from "@tauri-apps/api/core";
 
 // ── AI Provider Config ────────────────────────────────────────────────────────
 
@@ -72,8 +71,8 @@ const PROVIDERS: Record<string, Omit<AIProviderConfig, "apiKey">> = {
 
 // ── API Keys storage ─────────────────────────────────────────────────────────
 const sessionKeys: Record<string, string> = {
-  groq: import.meta.env.VITE_GROQ_API_KEY ?? "",
-  cerebras: import.meta.env.VITE_CEREBRAS_API_KEY ?? "",
+  groq: "backend",
+  cerebras: "backend",
 };
 
 export function setApiKey(provider: string, key: string) {
@@ -246,26 +245,20 @@ export async function sendMessage(options: SendOptions): Promise<string> {
     apiMessages.push({ role: m.role, content });
   }
 
-  const body = JSON.stringify({
-    model: provider.model,
-    messages: apiMessages,
-    stream: false,
-    temperature: mode === "engineer" ? 0.2 : 0.7,
-    max_tokens: 4096,
-  });
-
-  const authHeader = `Bearer ${apiKey}`;
-
-  const url = `${provider.baseUrl}/chat/completions`;
-
   try {
-    const responseText = await invoke<string>("ai_chat", {
-      url,
-      body,
-      authHeader,
+    const res = await fetch("https://astro-backend.garzaromerojeshuaabiram2019ktv.workers.dev/ai/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: provider.model,
+        messages: apiMessages,
+        temperature: mode === "engineer" ? 0.2 : 0.7,
+        max_tokens: 4096,
+        provider: providerName === "cerebras" ? "cerebras" : "groq",
+      }),
     });
-    const data = JSON.parse(responseText);
-    const content = data.choices?.[0]?.message?.content ?? "";
+    const data = await res.json();
+    const content = (data as any).choices?.[0]?.message?.content ?? "";
     if (onChunk) onChunk(content);
     return content;
   } catch (e) {

@@ -270,6 +270,17 @@ export default function SettingsPanel({
           />
         </div>
       )}
+
+      {/* Account / Sign Out */}
+      <div className="settings-account">
+        <button className="settings-signout" onClick={() => {
+          localStorage.removeItem("astro-auth-skip");
+          localStorage.removeItem("astro-session");
+          window.location.reload();
+        }}>
+          Sign Out
+        </button>
+      </div>
     </div>
   );
 }

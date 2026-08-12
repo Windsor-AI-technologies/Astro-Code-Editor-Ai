@@ -136,6 +136,12 @@ export default function CodeEditor({
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
       document.dispatchEvent(new CustomEvent('editor-save'));
     });
+
+    // Fix: Tauri2 + WebView2 + decorations:false sometimes swallows Space key.
+    // Force space insertion via keybinding if the normal input path fails.
+    editor.addCommand(monaco.KeyCode.Space, () => {
+      editor.trigger('keyboard', 'type', { text: ' ' });
+    });
     editor.addCommand(
       monaco.KeyMod.Shift | monaco.KeyMod.Alt | monaco.KeyCode.KeyF,
       () => editor.getAction('editor.action.formatDocument')?.run()

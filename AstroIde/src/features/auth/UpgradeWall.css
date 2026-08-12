@@ -1,0 +1,64 @@
+.upgrade-wall {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--bg-0) 85%, transparent);
+  backdrop-filter: blur(6px);
+  height: 100%;
+}
+
+.upgrade-wall-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  max-width: 320px;
+}
+
+.upgrade-wall-icon {
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.upgrade-wall-content h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.upgrade-wall-content p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.upgrade-wall-btn {
+  padding: 12px 32px;
+  border: none;
+  border-radius: 10px;
+  background: var(--text-primary);
+  color:var(--bg-0);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-top: 6px;
+}
+
+.upgrade-wall-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.upgrade-wall-hint {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.upgrade-wall-old-price {
+  color: var(--text-dim);
+  text-decoration: line-through;
+  margin-right: 4px;
+}

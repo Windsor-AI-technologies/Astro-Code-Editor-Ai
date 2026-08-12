@@ -1,4 +1,4 @@
-import { useRef, useEffect, useMemo } from "react";
+import { useRef, useEffect, useMemo, useState } from "react";
 import type * as Monaco from "monaco-editor";
 import type { TerminalPanelHandle } from "./features/terminal/Terminal/TerminalPanel";
 
@@ -25,10 +25,14 @@ import { DebugContext } from "./contexts/DebugContext";
 import { ExtensionsContext } from "./contexts/ExtensionsContext";
 
 import AppLayout from "./AppLayout";
+import WelcomeAuth from "./features/auth/WelcomeAuth";
 
 const SETTINGS_TAB_ID = "__settings__";
 
 export default function App() {
+  const [authenticated, setAuthenticated] = useState(() => {
+    return localStorage.getItem("astro-auth-skip") === "true";
+  });
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
   const terminalPanelRef = useRef<TerminalPanelHandle>(null);
 
@@ -305,7 +309,12 @@ export default function App() {
     ],
   );
 
+
   // ── Render ──────────────────────────────────────────────────────────────
+  if (!authenticated) {
+    return <WelcomeAuth onComplete={() => { setAuthenticated(true); localStorage.setItem("astro-auth-skip", "true"); }} />;
+  }
+
   return (
     <WorkspaceContext.Provider value={workspaceCtx}>
       <TabsContext.Provider value={tabsCtx}>

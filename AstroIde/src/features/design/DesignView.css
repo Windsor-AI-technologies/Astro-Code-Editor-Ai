@@ -1,0 +1,145 @@
+/* ── Design View ────────────────────────────────────────────────────────── */
+
+.design-view {
+  display: flex;
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Toolbar */
+.design-toolbar {
+  width: 44px;
+  background: var(--bg-0);
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0;
+  gap: 2px;
+}
+
+.design-tool {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.design-tool:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.design-tool.active {
+  background: var(--accent);
+  color: white;
+}
+
+/* Canvas */
+.design-canvas {
+  flex: 1;
+  background: var(--bg-0);
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.design-canvas-inner {
+  width: 1024px;
+  height: 768px;
+  background: var(--bg-0);
+
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+}
+
+.design-placeholder {
+  text-align: center;
+  color: var(--text-dim);
+}
+
+.design-placeholder-icon {
+  color: var(--accent);
+  opacity: 0.5;
+  margin-bottom: 12px;
+}
+
+.design-placeholder h2 {
+  font-size: 18px;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.design-placeholder p {
+  font-size: 12px;
+}
+
+.design-hints {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  font-size: 10px;
+  color: var(--text-primary);
+}
+
+/* Properties panel */
+.design-properties {
+  width: 240px;
+  background: var(--bg-0);
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+
+.design-prop-header {
+  padding: 10px 12px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+}
+
+.design-prop-empty {
+  padding: 16px 12px;
+  font-size: 11px;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.design-components {
+  padding: 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+.design-comp-item {
+  padding: 8px;
+  background: var(--bg-2);
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--text-primary);
+  text-align: center;
+  cursor: grab;
+}
+
+.design-comp-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}

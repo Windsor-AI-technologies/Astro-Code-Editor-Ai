@@ -7,6 +7,21 @@
   padding: 0;
 }
 
+/* Prevent UI buttons from stealing focus from Monaco editor.
+   Space/Enter on a focused button "clicks" it instead of typing in the editor. */
+button:not(.monaco-editor button):focus-visible {
+  outline: none;
+}
+button:not(.monaco-editor button) {
+  -webkit-user-select: none;
+  user-select: none;
+}
+/* Release focus from buttons after mouse click (keep for keyboard nav) */
+button:not(.monaco-editor button):focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
 :root {
   --bg-root: #16161e;
   --bg-0: #1a1b26;
@@ -244,3 +259,31 @@ body:has(.acrylic-on) #root {
 }
 
 /* ─── Monaco Context Menu ─────────────────────────────────────────────── */
+
+/* ── Mode transition animations ──────────────────────────────────────────── */
+
+.mode-view {
+  display: flex;
+  flex: 1;
+  position: absolute;
+  inset: 0;
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mode-view.mode-active {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+  pointer-events: auto;
+  position: relative;
+  overflow: hidden;
+}
+
+.mode-view.mode-hidden {
+  opacity: 0;
+  transform: translateX(40px) scale(0.97);
+  pointer-events: none;
+  position: absolute;
+  height: 0;
+  overflow: hidden;
+}

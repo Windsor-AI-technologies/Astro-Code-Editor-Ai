@@ -170,3 +170,40 @@ App (Tauri) → Tu backend → Groq/DeepSeek → Tu backend → App
 - Al cerrar panel = liberar toda la memoria (mismo patrón que extensiones)
 - NUNCA precargar todo el historial como GitLens
 - NUNCA cachear blame de archivos que no están abiertos
+
+---
+
+## 10. Electronics Mode
+
+### Básico (gratis, 0 RAM extra)
+- Editor de código C/C++ para Arduino/ESP32 (ya existe con Monaco)
+- Monitor serial — comunicación USB con el board via puerto COM
+- Upload de código via `arduino-cli` (compile + upload)
+- Detección de boards conectados
+
+### Premium (diagrama de circuitos)
+- Desactivado por defecto en config
+- Al activar: modal de advertencia "Consume más RAM"
+- Dos opciones:
+  - **Local**: canvas SVG con editor de esquemáticos (~5-10MB RAM extra)
+  - **Nube**: renderizado en servidor remoto (costo de infra, 0 RAM cliente)
+- El usuario elige cuál prefiere
+
+---
+
+## 11. Migración a Tauri 3 (multi-webview)
+
+### Objetivo
+- Browser embebido real dentro de la app (sin X-Frame-Options)
+- YouTube, Spotify, Supabase dashboard, GitHub — todo embebido
+- Cada webview consume RAM solo cuando está activa, se libera al cerrar
+
+### Beneficios
+- Webviews aisladas con sesión propia (cookies/localStorage)
+- Sin restricciones de iframe
+- RAM base sigue baja (~4MB), webviews extra solo on-demand
+- API estable de `add_child` para embeber dentro de la ventana principal
+
+### Prerequisito
+- Esperar a que Tauri 3 lance la feature multi-webview como estable
+- Migrar de Tauri 2 → Tauri 3 (actualizar deps + config)

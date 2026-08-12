@@ -3,6 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  position: relative;
   height: 30px;
   padding: 0 12px;
   flex-shrink: 0;
@@ -20,7 +21,7 @@
   align-items: center;
   gap: 0;
   flex: 1;
-  -webkit-app-region: no-drag;
+  -webkit-app-region: drag;
 }
 
 .titlebar-icon {
@@ -29,16 +30,13 @@
 }
 
 .titlebar-center {
-  max-width: 500px;
-  min-width: 480px;
-  margin-left: 80px;
+  width: 400px;
   text-align: center;
   background-color: var(--bg-2);
   border: 1px solid var(--border);
   padding: 4px 16px;
   border-radius: 5px;
   font-size: 11px;
-  /* margin-top: 5px; */
   color: var(--text-primary);
   cursor: pointer;
   pointer-events: auto;
@@ -47,6 +45,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
   transition: background 0.12s, border-color 0.12s;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .titlebar-center:hover {
@@ -58,9 +59,9 @@
 .titlebar-right {
   display: flex;
   align-items: center;
-  flex: 1;
   justify-content: flex-end;
   padding-right: 8px;
+  gap: 8px;
   -webkit-app-region: no-drag;
 }
 
@@ -135,6 +136,7 @@
 
 .menu-item-wrapper {
   position: relative;
+  -webkit-app-region: no-drag;
 }
 
 .menu-item {

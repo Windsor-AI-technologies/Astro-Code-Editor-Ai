@@ -1,0 +1,323 @@
+/* ============================================
+   PERL — Voice Assistant View
+   ============================================ */
+
+.perl-view {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+background: transparent;
+  position: relative;
+}
+
+/* ── Orb Area ── */
+.perl-orb-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  min-height: 300px;
+}
+
+.perl-orb-container {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+/* ── Overlay (status + button) ── */
+.perl-overlay {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  pointer-events: none;
+}
+
+.perl-overlay > * {
+  pointer-events: auto;
+}
+
+/* Status indicator */
+.perl-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: color-mix(in srgb, var(--bg-1) 85%, transparent);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 12px;
+  color: var(--text-1);
+  transition: all 0.3s ease;
+}
+
+.perl-status--listening {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.perl-status--thinking {
+  border-color: #ab47bc;
+  color: #ab47bc;
+}
+
+.perl-status--speaking {
+  border-color: #4fc3f7;
+  color: #4fc3f7;
+}
+
+.perl-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: perlPulse 1.5s ease-in-out infinite;
+}
+
+.perl-status--idle .perl-status-dot {
+  animation: none;
+  opacity: 0.4;
+}
+
+@keyframes perlPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+/* Activate button */
+.perl-activate-btn {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: color-mix(in srgb, var(--bg-1) 80%, transparent);
+  backdrop-filter: blur(8px);
+  color: var(--text-1);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.perl-activate-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: scale(1.05);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.perl-activate-btn--active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-1));
+  animation: perlBtnPulse 2s ease-in-out infinite;
+}
+
+.perl-activate-btn--active:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+@keyframes perlBtnPulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 20%, transparent); }
+  50% { box-shadow: 0 0 0 12px color-mix(in srgb, var(--accent) 0%, transparent); }
+}
+
+/* Audio level bar */
+.perl-level-bar {
+  width: 120px;
+  height: 4px;
+  background: var(--bg-2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.perl-level-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #ff8800);
+  border-radius: 2px;
+  transition: width 0.05s linear;
+}
+
+/* ── Conversation Panel ── */
+.perl-conversation {
+  max-height: 200px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-1);
+}
+
+.perl-conversation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid var(--border);
+}
+
+.perl-clear-btn {
+  background: none;
+  border: none;
+  color: var(--text-2);
+  font-size: 10px;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+
+.perl-clear-btn:hover {
+  background: var(--bg-2);
+  color: var(--text-0);
+}
+
+.perl-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.perl-msg {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.perl-msg-avatar {
+  font-size: 14px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-2);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.perl-msg-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.perl-msg-role {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-2);
+  text-transform: uppercase;
+}
+
+.perl-msg-content p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--text-0);
+  line-height: 1.4;
+}
+
+.perl-msg--perl .perl-msg-content p {
+  color: var(--accent);
+}
+
+/* Live transcript */
+.perl-transcript {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 20px;
+  background: color-mix(in srgb, var(--bg-1) 90%, transparent);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-0);
+  max-width: 400px;
+  text-align: center;
+  z-index: 2;
+}
+
+/* ── Text input fallback ── */
+.perl-text-input {
+  display: flex;
+  gap: 8px;
+  padding: 12px 24px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-1);
+}
+
+.perl-input-field {
+  flex: 1;
+  padding: 10px 14px;
+  background: var(--bg-0);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-0);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.perl-input-field:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.perl-input-field::placeholder {
+  color: var(--text-2);
+}
+
+.perl-send-btn {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.perl-send-btn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.perl-send-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Scrollbar ── */
+.perl-messages::-webkit-scrollbar {
+  width: 4px;
+}
+
+.perl-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.perl-messages::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
