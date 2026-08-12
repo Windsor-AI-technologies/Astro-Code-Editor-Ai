@@ -21,6 +21,10 @@ export default function NotebookCell({ cell, index, isActive, themeId, kernelBus
   const handleMount: OnMount = (editor, monaco) => {
     editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => { runRef.current?.(cell.id); });
     editor.addCommand(monaco.KeyCode.Space, () => { editor.trigger('keyboard', 'type', { text: ' ' }); });
+    // Re-register on focus to ensure it always works
+    editor.onDidFocusEditorText(() => {
+      editor.addCommand(monaco.KeyCode.Space, () => { editor.trigger('keyboard', 'type', { text: ' ' }); });
+    });
     setTimeout(() => editor.focus(), 100);
   };
 
