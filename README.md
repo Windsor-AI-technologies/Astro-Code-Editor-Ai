@@ -2,7 +2,7 @@
 
 -lightweight, high-performance AI-powered code editor and IDE built from scratch using **Tauri 2**, **Rust**, **React**, and **Monaco Editor**. 
 
-Designed as the ultimate minimal alternative to heavy development environments, **Astro Code Editor AI** delivers a modern, blazing-fast workspace running smoothly on just **~ < 20 MB of RAM**.
+Designed as the ultimate minimal alternative to heavy development environments, **Astro Code Editor AI** delivers a modern, blazing-fast workspace running.
 
 ---
 
@@ -21,7 +21,7 @@ By bypassing the heavy Chromium/Electron runtimes and leveraging optimized nativ
 | **VS Code / Cursor** | Electron / Chromium | ~500 MB - 1.2 GB | Yes / Via Plugins |
 | **Zed Editor** | Rust (GPUI) | ~150 MB - 300 MB | Yes |
 | **Sublime Text** | C++ (Custom UI) | ~50 MB - 100 MB | No |
-|  **Astro Code Editor AI** | **Rust + Tauri 2** | **~9 MB**  | **Yes (Built-in)** |
+|  **Astro Code Editor AI** | **Rust + Tauri 2** | ** ~85 - ~120 MB**  | **Yes (Built-in)** |
 
 ---
 
