@@ -21,7 +21,7 @@ By bypassing the heavy Chromium/Electron runtimes and leveraging optimized nativ
 | **VS Code / Cursor** | Electron / Chromium | ~500 MB - 1.2 GB | Yes / Via Plugins |
 | **Zed Editor** | Rust (GPUI) | ~150 MB - 300 MB | Yes |
 | **Sublime Text** | C++ (Custom UI) | ~50 MB - 100 MB | No |
-| 🚀 **Astro Code Editor AI** | **Rust + Tauri 2** | **~9 MB**  | **Yes (Built-in)** |
+|  **Astro Code Editor AI** | **Rust + Tauri 2** | **~9 MB**  | **Yes (Built-in)** |
 
 ---
 
@@ -80,4 +80,5 @@ Licensed under the **GPLv3 License** — completely open source, transparent, an
 
 
 <img width="1712" height="1047" alt="image" src="https://github.com/Jeshua3545926/Astro-Code-Editor-Ai/blob/main/Screenshot%202026-08-09%20130121.png?raw=true" />
+<img width="1658" height="982" alt="Screenshot 2026-08-11 130818" src="https://github.com/user-attachments/assets/e0c44fc7-14ec-4175-bce8-0f300975bcd7" />
 
