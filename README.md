@@ -27,8 +27,8 @@ By bypassing the heavy Chromium/Electron runtimes and leveraging optimized nativ
 
 ## Key Features
 
-* **Microscopic 9 MB RAM Footprint:** Eliminates memory bloating entirely.
-* **Tiny Distribution:** Super-small installation footprint (Installer: ~1.75 MB / Executable: ~3.5 MB).
+* **Microscopic ~85MB RAM Footprint:** Eliminates memory bloating entirely.
+* **Tiny Distribution:** Super-small installation footprint (Installer: ~2.75 MB / Executable: ~4.5 MB).
 * **Full LSP Integration:** Native Language Server Protocol support for smart autocompletion, syntax checking, and code diagnostics.
 * **Omnipresent AI Workspace:** Context-aware AI assistant integrated deeply throughout the entire editor interface.
 * **Native Windows 11 Acrylic Design:** Implements clean, native transparency and blur effects without GPU overhead.
