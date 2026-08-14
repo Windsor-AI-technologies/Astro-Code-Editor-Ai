@@ -39,7 +39,7 @@ By bypassing the heavy Chromium/Electron runtimes and leveraging optimized nativ
 
 - [x] Full LSP Support & Code Auto-completion.
 - [x] Omnipresent AI Assistant in Workspace.
-- [ ] **Cloud Music Player:** Built-in streaming music player running directly on the cloud to save local machine resources while coding.
+- [x] **Cloud Music Player:** Built-in streaming music player running directly on the cloud to save local machine resources while coding.
 - [ ] **Mobile Companion App:** Cross-platform mobile ecosystem extension to monitor and interact with your developer environment.
 - [x] Highly Extensible Plugin Architecture.
 
