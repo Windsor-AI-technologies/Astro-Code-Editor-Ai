@@ -287,3 +287,5 @@ body:has(.acrylic-on) #root {
   height: 0;
   overflow: hidden;
 }
+
+@keyframes spin { to { transform: rotate(360deg); } }

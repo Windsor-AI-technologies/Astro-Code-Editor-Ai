@@ -6,6 +6,7 @@ import { sendMessage, hasApiKey } from '../../services/ai';
 import { useWorkspaceCtx } from '../../contexts/WorkspaceContext';
 import { useTabsCtx } from '../../contexts/TabsContext';
 import SpacetimeGrid from './SpacetimeGrid';
+import { useSettingsCtx } from '../../contexts/SettingsContext';
 import { canAccessPerl } from '../../features/auth/plan';
 import UpgradeWall from '../../features/auth/UpgradeWall';
 import PerlView from './perl/PerlView';
@@ -58,6 +59,8 @@ const AGENT_MODES: { id: AgentMode; label: string; icon: React.ReactNode }[] = [
 export default function AgentView() {
   const { rootPath } = useWorkspaceCtx();
   const { activeTab, editorRef } = useTabsCtx();
+  const { settings } = useSettingsCtx();
+  const spacetimeEnabled = settings['workbench.spacetimeGrid'];
 
   const [agentMode, setAgentMode] = useState<AgentMode>('agent');
   const [sliderStyle, setSliderStyle] = useState({ left: 0, width: 0 });
@@ -203,7 +206,11 @@ export default function AgentView() {
       ) : (
         <>
       <div className="agent-main">
-        <SpacetimeGrid opacity={0.5} />
+        {/* CSS gradient background (default) or SpacetimeGrid if enabled */}
+        {spacetimeEnabled
+          ? <SpacetimeGrid opacity={0.5} />
+          : <div style={{ position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none", background: "radial-gradient(ellipse at 50% 30%, color-mix(in srgb, var(--accent) 6%, transparent) 0%, transparent 60%)" }} />
+        }
         <div className="agent-chat-area">
           {messages.length === 0 ? (
             <div className="agent-empty">

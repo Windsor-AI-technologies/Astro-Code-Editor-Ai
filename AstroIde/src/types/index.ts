@@ -34,6 +34,7 @@ export interface AppSettings {
   'workbench.sidebarPosition': 'left' | 'right' | 'top' ;
   'workbench.acrylic': boolean;
   'workbench.acrylicOpacity': number;
+  'workbench.spacetimeGrid': boolean;
   'workbench.nativeFrame': boolean;
   'workbench.aiPanelPosition': 'left' | 'right';
   'workbench.aiPanelWidth': number;
@@ -58,6 +59,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   'workbench.sidebarPosition': 'right',
   'workbench.acrylic': true,
   'workbench.acrylicOpacity': 0.35,
+  'workbench.spacetimeGrid': false,
   'workbench.nativeFrame': false,
   'workbench.aiPanelPosition': 'right',
   'workbench.aiPanelWidth': 320,

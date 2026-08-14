@@ -151,6 +151,13 @@ export const SETTING_ROWS: SettingRow[] = [
     group: "Workbench",
   },
   {
+    key: "workbench.spacetimeGrid",
+    label: "Spacetime Grid (Agent)",
+    description: "⚠️ Animación 3D en el modo Agent. Consume más RAM y GPU. Desactivado por default.",
+    type: "boolean",
+    group: "Workbench",
+  },
+  {
     key: "workbench.nativeFrame",
     label: "Frame nativo",
     description:

@@ -7,6 +7,7 @@ import { SETTING_ROWS } from "./settingsRow";
 import type { AppSettings } from "../../../types";
 import { DEFAULT_SETTINGS } from "../../../types";
 import { THEMES, registerAllMonacoThemes } from "../../../themes";
+import { openFeedback } from "../../../services/tauri";
 import "./SettingsPanel.css";
 
 interface SettingsPanelProps {
@@ -89,6 +90,19 @@ export default function SettingsPanel({
   }
 
   const rowsByGroup = SETTING_ROWS.filter((r) => r.group === activeGroup);
+
+  //   const openFeedback = async () => {
+  //   try {
+  //     await invoke("perl_open_url", {
+  //       url: "https://astrocodeeditorai.vercel.app/feedback.html",
+  //     });
+  //   } catch {
+  //     window.open(
+  //       "https://astrocodeeditorai.vercel.app/feedback.html",
+  //       "_blank",
+  //     );
+  //   }
+  // };
 
   return (
     <div className="settings-panel">
@@ -280,6 +294,9 @@ export default function SettingsPanel({
         }}>
           Sign Out
         </button>
+        <button className="feedback" 
+        onClick={() => 
+        openFeedback("https://astrocodeeditorai.vercel.app/feedback.html")}> Feedback</button>
       </div>
     </div>
   );

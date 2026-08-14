@@ -12,6 +12,7 @@ import {
   ChartScatter,
 } from "lucide-react";
 import "./ActivityBar.css";
+import { identifyUser } from '../../../services/analytics';
 
 interface ActivityBarProps {
   activeView: string;
@@ -63,15 +64,17 @@ export default function ActivityBar({
         .then((r) => r.json())
         .then((data) => {
           if (data.email) {
-            localStorage.setItem("astro-user", JSON.stringify(data));
+            setUserEmail(data.email);
             if (data.name) setUserName(data.name);
             if (data.avatar) setUserAvatar(data.avatar);
-            // Save plan from database
+            const plan = data.plan || "free";
             localStorage.setItem("astro-user-plan", JSON.stringify({
-              id: data.plan || "free",
-              label: (data.plan || "free").charAt(0).toUpperCase() + (data.plan || "free").slice(1),
+              id: plan,
+              label: plan.charAt(0).toUpperCase() + plan.slice(1),
               perlAddon: data.perl_addon || false,
             }));
+            // Identify in PostHog
+            identifyUser(data.id, data.email, plan);
           }
         })
         .catch(() => {});

@@ -115,3 +115,16 @@ export async function extListInstalled(): Promise<any[]> {
 export async function extSetEnabled(id: string, enabled: boolean): Promise<void> {
   return invoke('ext_set_enabled', { id, enabled });
 }
+
+export const openFeedback = async (url:string) => {
+  try {
+    await invoke("perl_open_url", {
+      url: url,
+    });
+  } catch {
+    window.open(
+      url,
+      "_blank",
+    );
+  }
+};
