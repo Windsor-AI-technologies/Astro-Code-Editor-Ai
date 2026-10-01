@@ -179,4 +179,7 @@ fn get_shell() -> String {
     {
         std::env::var("SHELL").unwrap_or_else(|_| "/bin/bash".to_string())
     }
+    // #[cfg(target_os = "linux")]
+    // {
+    // }
 }

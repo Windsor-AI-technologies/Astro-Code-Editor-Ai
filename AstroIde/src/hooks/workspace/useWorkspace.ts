@@ -36,7 +36,7 @@ export function useWorkspace() {
     // Dispose Monaco models (frees file content RAM)
     try {
       const monaco = await loader.init();
-      monaco.editor.getModels().forEach(model => model.dispose());
+      monaco.editor.getModels().forEach((model: import('monaco-editor').editor.ITextModel) => model.dispose());
     } catch { /* not initialized yet */ }
 
     // Clean providers & LSP state
