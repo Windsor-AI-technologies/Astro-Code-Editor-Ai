@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { useRef, useEffect, useState, useCallback } from 'react';
 import MonacoEditor, { OnMount, BeforeMount } from '@monaco-editor/react';
 import type * as Monaco from 'monaco-editor';
@@ -5,7 +11,8 @@ import type { Tab } from '../../../types';
 import { getLanguageLabel, ALL_LANGUAGES } from '../../../utils/language';
 import { registerAllMonacoThemes } from '../../../themes';
 import { registerCompletionProviders, registerLanguageKeywords } from '../../../utils/completions';
-import { registerLspProviders } from '../../../services/lsp-monaco-bridge';
+import { registerLspProviders, notifyDocumentOpened, notifyDocumentChanged, notifyDocumentClosed } from '../../../services/lsp-monaco-bridge';
+import { filePathToUri, uriToFilePath } from '../../../services/lsp-client';
 import ContextMenu, { ContextMenuItem } from '../../../components/ui/ContextMenu/ContextMenu';
 import EditorCommandPalette from '../EditorCommandPalette/EditorCommandPalette';
 import './CodeEditor.css';
@@ -39,12 +46,14 @@ interface CodeEditorProps {
   diffPreview?: { added: number[]; removed: number[] } | null;
   onAcceptDiff?: () => void;
   onDiscardDiff?: () => void;
+  // LSP
+  onOpenFile?: (path: string, line: number) => void;
 }
 
 export default function CodeEditor({
   tab, settings, themeId, onChange, onLanguageChange, editorRef, rootPath,
   breakpoints = [], pausedLine = null, pausedFile = null, onToggleBreakpoint,
-  diffPreview = null, onAcceptDiff, onDiscardDiff,
+  diffPreview = null, onAcceptDiff, onDiscardDiff, onOpenFile,
 }: CodeEditorProps) {
   const monacoRef = useRef<any>(null);
   const diffDecorationsRef = useRef<string[]>([]);
@@ -121,7 +130,7 @@ export default function CodeEditor({
     registerLanguageKeywords(monaco);
 
     // Registrar LSP providers
-    registerLspProviders(monaco, rootPath ?? null);
+    registerLspProviders(monaco, rootPath ?? null, { onOpenFile });
   };
 
   const handleMount: OnMount = (editor, monaco) => {
@@ -131,6 +140,12 @@ export default function CodeEditor({
     // Escuchar cambios directamente del modelo (no via prop onChange que causa re-renders)
     editor.onDidChangeModelContent(() => {
       onChange();
+
+      const model = editor.getModel();
+      if (model?.uri.scheme === 'file') {
+        const path = uriToFilePath(model.uri.toString());
+        if (path) notifyDocumentChanged(path, model.getValue());
+      }
     });
 
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
@@ -148,6 +163,28 @@ export default function CodeEditor({
         editor.trigger('keyboard', 'type', { text: ' ' });
       });
     });
+
+    // Tab must indent even when the suggestion widget is open; otherwise
+    // Monaco accepts the selected suggestion and the user loses indentation.
+    // Snippet placeholders keep their native Tab navigation.
+    const tabIndentContext =
+      'suggestWidgetVisible && editorTextFocus && !inSnippetMode && !editorTabMovesFocus';
+    editor.addCommand(
+      monaco.KeyCode.Tab,
+      () => {
+        editor.trigger('keyboard', 'hideSuggestWidget', {});
+        editor.trigger('keyboard', 'tab', {});
+      },
+      tabIndentContext
+    );
+    editor.addCommand(
+      monaco.KeyMod.Shift | monaco.KeyCode.Tab,
+      () => {
+        editor.trigger('keyboard', 'hideSuggestWidget', {});
+        editor.trigger('keyboard', 'outdent', {});
+      },
+      tabIndentContext
+    );
     editor.addCommand(
       monaco.KeyMod.Shift | monaco.KeyMod.Alt | monaco.KeyCode.KeyF,
       () => editor.getAction('editor.action.formatDocument')?.run()
@@ -195,7 +232,39 @@ export default function CodeEditor({
     }
   }, [tab?.language]);
 
-  // ── LSP: desactivado — evitar uso de memoria innecesario
+  // ── LSP: registrar providers y sincronizar el documento abierto ────────
+  useEffect(() => {
+    if (monacoRef.current) {
+      registerLspProviders(monacoRef.current, rootPath ?? null, { onOpenFile });
+    }
+  }, [rootPath, onOpenFile]);
+
+  useEffect(() => {
+    const path = tab?.path;
+    if (!path || !monacoRef.current) return;
+
+    const model = editorRef.current?.getModel();
+    const content = model?.getValue() ?? tab.content;
+    notifyDocumentOpened(path, content, rootPath ?? null).catch(() => {});
+
+    return () => {
+      notifyDocumentClosed(path).catch(() => {});
+    };
+  }, [tab?.path, rootPath]);
+
+  // Reinicio del servidor LSP (por ejemplo, tras instalar .NET/csharp-ls)
+  useEffect(() => {
+    const handleRestart = () => {
+      const path = tab?.path;
+      if (!path) return;
+      const model = editorRef.current?.getModel();
+      notifyDocumentOpened(path, model?.getValue() ?? tab.content, rootPath ?? null)
+        .catch(() => {});
+    };
+
+    window.addEventListener('astro:lsp-restart', handleRestart);
+    return () => window.removeEventListener('astro:lsp-restart', handleRestart);
+  }, [tab?.path, tab?.content, rootPath]);
 
   // ── Debug decorations (breakpoints + paused line) ─────────────────────
   useEffect(() => {
@@ -358,8 +427,8 @@ export default function CodeEditor({
           quickSuggestionsDelay: 10,
           acceptSuggestionOnCommitCharacter: true,
           acceptSuggestionOnEnter: 'on',
-          tabCompletion: 'on',
-          wordBasedSuggestions: 'allDocuments',
+          tabCompletion: 'off',
+          wordBasedSuggestions: 'off',
           wordBasedSuggestionsOnlySameLanguage: false,
           suggestSelection: 'recentlyUsedByPrefix',
           suggest: {
@@ -384,7 +453,8 @@ export default function CodeEditor({
             snippetsPreventQuickSuggestions: false,
             localityBonus: true,
             shareSuggestSelections: true,
-            filterGraceful: true,
+            filterGraceful: false,
+            showWords: false,
             preview: true,
             previewMode: 'subwordSmart',
             showIcons: true,
@@ -425,7 +495,7 @@ export default function CodeEditor({
           mouseWheelScrollSensitivity: 1.5,
           largeFileOptimizations: true,
         }}
-        path={tab.path || `untitled-${tab.id}`}
+        path={tab.path ? filePathToUri(tab.path) : `untitled-${tab.id}`}
       />
       <div className="editor-lang-selector">
         <select value={tab.language} onChange={e => onLanguageChange(e.target.value)} title="Lenguaje">

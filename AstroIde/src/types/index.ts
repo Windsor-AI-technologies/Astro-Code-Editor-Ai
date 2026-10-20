@@ -1,4 +1,10 @@
 
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 export interface FileEntry {
   name: string;
   path: string;

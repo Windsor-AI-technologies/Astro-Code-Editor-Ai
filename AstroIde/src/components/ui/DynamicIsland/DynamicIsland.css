@@ -1,0 +1,61 @@
+/* ── Dynamic Island (estilo Xiaomi) ─────────────────────────────────────── */
+.dynamic-island {
+  position: fixed;
+  top: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(90vw, 480px);
+  background: #000;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  padding: 10px 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  animation: island-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dynamic-island-dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 10px #4ade80;
+}
+
+.dynamic-island-text {
+  font-size: 13px;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dynamic-island.closing {
+  animation: island-out 0.3s ease forwards;
+}
+
+@keyframes island-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) scaleX(0.5) scaleY(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+@keyframes island-out {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) scaleX(0.5) scaleY(0.7);
+  }
+}

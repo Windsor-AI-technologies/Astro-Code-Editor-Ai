@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { invoke } from '@tauri-apps/api/core';
 import type { FileEntry } from '../types';
 
@@ -116,15 +122,13 @@ export async function extSetEnabled(id: string, enabled: boolean): Promise<void>
   return invoke('ext_set_enabled', { id, enabled });
 }
 
-export const openFeedback = async (url:string) => {
+/** Abre una URL en el navegador del sistema (con fallback a window.open). */
+export const openExternal = async (url: string) => {
   try {
-    await invoke("perl_open_url", {
-      url: url,
-    });
+    await invoke("perl_open_url", { url });
   } catch {
-    window.open(
-      url,
-      "_blank",
-    );
+    window.open(url, "_blank");
   }
 };
+
+export const openFeedback = async (url: string) => openExternal(url);

@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { useTabsCtx } from '../../../contexts/TabsContext';
 import { useUICtx } from '../../../contexts/UIContext';
 import StatusBar from '../StatusBar/StatusBar';

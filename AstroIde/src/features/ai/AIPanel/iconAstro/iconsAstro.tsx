@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 export default function BlackHoleIcon({ size = 20 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" fill="none">

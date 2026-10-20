@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import './ContextMenu.css';

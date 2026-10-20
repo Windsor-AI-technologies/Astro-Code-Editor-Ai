@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { useEffect, useRef } from 'react';
 
 interface UseKeyboardOptions {
@@ -8,21 +14,38 @@ interface UseKeyboardOptions {
   onToggleTerminal: () => void;
   onToggleAI: () => void;
   onCommandPalette: () => void;
+  /** F5 — continuar o iniciar depuración */
+  onDebug?: () => void;
+  /** Ctrl+F5 — ejecutar sin depurar */
+  onRun?: () => void;
+  /** Shift+F5 — detener ejecución/depuración */
+  onStopExecution?: () => void;
 }
 
 /**
  * Global keyboard shortcut handler for the IDE.
- * Supports Ctrl+S, Ctrl+B, Ctrl+W, Ctrl+,, Ctrl+`, Ctrl+Shift+A, Ctrl+K T
+ * Supports Ctrl+S, Ctrl+B, Ctrl+W, Ctrl+,, Ctrl+`, Ctrl+Shift+A, Ctrl+K T,
+ * F5, Ctrl+F5 and Shift+F5.
  */
 export function useKeyboard({
   onSave, onToggleSidebar, onCloseTab, onToggleSettings,
-  onToggleTerminal, onToggleAI, onCommandPalette
+  onToggleTerminal, onToggleAI, onCommandPalette,
+  onDebug, onRun, onStopExecution,
 }: UseKeyboardOptions) {
   const ctrlKRef = useRef(false);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       const mod = e.ctrlKey || e.metaKey;
+
+      // F5 / Ctrl+F5 / Shift+F5 (ejecutar y depurar)
+      if (e.key === 'F5') {
+        e.preventDefault();
+        if (e.shiftKey) onStopExecution?.();
+        else if (mod) onRun?.();
+        else onDebug?.();
+        return;
+      }
 
       if (mod && e.key === 's') { e.preventDefault(); onSave(); }
       if (mod && e.key === 'b') { e.preventDefault(); onToggleSidebar(); }
@@ -58,5 +81,5 @@ export function useKeyboard({
       window.removeEventListener('keydown', onKeyDown);
       document.removeEventListener('editor-save', onEditorSave);
     };
-  }, [onSave, onToggleSidebar, onCloseTab, onToggleSettings, onToggleTerminal, onToggleAI, onCommandPalette]);
+  }, [onSave, onToggleSidebar, onCloseTab, onToggleSettings, onToggleTerminal, onToggleAI, onCommandPalette, onDebug, onRun, onStopExecution]);
 }

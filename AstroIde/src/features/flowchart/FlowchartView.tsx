@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { useState, useCallback, useMemo, useRef } from "react";
 import ProcessNode from "./nodes/ProcessNode";
 import DecisionNode from "./nodes/DecisionNode";

@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { useEffect, useRef } from 'react';
 import type * as Monaco from 'monaco-editor';
 import type { Tab } from '../../types';
@@ -46,7 +52,6 @@ export function useAutoSave({ tabs, activeTabId, editorRef, dirtySetRef, setTabs
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tabs.filter(t => t.isDirty).length]);
 
   function cancelAutoSave() {

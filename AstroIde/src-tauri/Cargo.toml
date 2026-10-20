@@ -24,6 +24,9 @@ tungstenite = { version = "0.24", default-features = false, features = ["handsha
 ureq = { version = "2", default-features = false, features = ["json", "tls"] }
 zip = { version = "2", default-features = false, features = ["deflate"] }
 urlencoding = "2"
+sha2 = "0.10"
+flate2 = "1"
+tar = "0.4"
 
 [profile.release]
 opt-level = "z"        # Máxima optimización para tamaño mínimo

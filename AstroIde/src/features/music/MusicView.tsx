@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { useState, useRef, useEffect } from 'react';
 import { Play, Pause, Search, Music, Volume2 } from 'lucide-react';
 import './MusicView.css';

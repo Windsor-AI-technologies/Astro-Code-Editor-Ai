@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { useWorkspaceCtx } from '../../../contexts/WorkspaceContext';
 import { useTabsCtx } from '../../../contexts/TabsContext';
 import { useSettingsCtx } from '../../../contexts/SettingsContext';

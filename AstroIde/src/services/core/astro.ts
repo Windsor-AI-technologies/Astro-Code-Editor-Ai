@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { registerAction, executeAction } from "./actionRegistry";
 
 //* ────────────────────────── Astro API ──────────────────────────────────
@@ -8,9 +14,17 @@ import { registerAction, executeAction } from "./actionRegistry";
 type NotificationHandler = (msg: string) => void;
 let _showNotification: NotificationHandler = () => {};
 
+type IslandHandler = (msg: string) => void;
+let _showIsland: IslandHandler = () => {};
+
 /** Conecta el handler de notificaciones (se llama una vez al iniciar la app) */
 export function connectNotificationHandler(handler: NotificationHandler) {
   _showNotification = handler;
+}
+
+/** Conecta el handler de la isla dinámica (se llama una vez al iniciar la app) */
+export function connectIslandHandler(handler: IslandHandler) {
+  _showIsland = handler;
 }
 
 export const astro: AstroAPI = {
@@ -63,7 +77,14 @@ export const astro: AstroAPI = {
     },
     succes(message: string){
       _showNotification(`${message}`)
-    }
+    },
+
+    /** Isla dinámica estilo Xiaomi */
+    dynamic: {
+      island(message: string) {
+        _showIsland(message);
+      },
+    },
   },
 };
 

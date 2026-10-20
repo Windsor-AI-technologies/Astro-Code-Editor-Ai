@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { registerActions } from "./actionRegistry";
 import { astro } from "./astro";
 /**
@@ -20,6 +26,9 @@ export function registerCoreActions(handlers: {
   find: () => void;
   formatDocument: () => void;
   showNotification: (msg: string) => void;
+  runFile: () => void | Promise<void>;
+  debugFile: () => void | Promise<void>;
+  stopExecution: () => void | Promise<void>;
 }) {
   return registerActions([
     // File
@@ -49,6 +58,29 @@ export function registerCoreActions(handlers: {
       title: "Abrir carpeta",
       category: "Archivo",
       run: handlers.openFolder,
+    },
+
+    // Ejecutar
+    {
+      id: "run.activeFile",
+      title: "Ejecutar archivo activo",
+      category: "Ejecutar",
+      shortcut: "Ctrl+F5",
+      run: handlers.runFile,
+    },
+    {
+      id: "debug.activeFile",
+      title: "Iniciar depuración",
+      category: "Ejecutar",
+      shortcut: "F5",
+      run: handlers.debugFile,
+    },
+    {
+      id: "run.stop",
+      title: "Detener ejecución o depuración",
+      category: "Ejecutar",
+      shortcut: "Shift+F5",
+      run: handlers.stopExecution,
     },
 
     // Edit

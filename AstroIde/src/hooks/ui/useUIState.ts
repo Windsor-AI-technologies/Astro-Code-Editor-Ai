@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { useState, useCallback } from 'react';
 
 /**
@@ -28,6 +34,14 @@ export function useUIState() {
     setTimeout(() => setNotification(null), ms);
   }, []);
 
+  // Isla dinámica — toast con forma de píldora arriba al centro
+  const [island, setIsland] = useState<string | null>(null);
+
+  const showIsland = useCallback((msg: string, ms = 3000) => {
+    setIsland(msg);
+    setTimeout(() => setIsland(null), ms);
+  }, []);
+
   const toggleTerminal = useCallback(() => setTerminalVisible(v => !v), []);
   const toggleAI = useCallback(() => setAiPanelVisible(v => !v), []);
   const toggleSidebar = useCallback(() => setSidebarVisible(v => !v), []);
@@ -53,5 +67,7 @@ export function useUIState() {
     statusMessage, showMessage,
     // Notifications
     notification, showNotification,
+    // Dynamic island
+    island, showIsland,
   };
 }

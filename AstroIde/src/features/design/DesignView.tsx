@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { MousePointer2, Square, Type, Image, Layers, Move } from 'lucide-react';
 import './DesignView.css';
 

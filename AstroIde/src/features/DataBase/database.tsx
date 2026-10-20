@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { useState } from "react";
 import {
   Database,
@@ -13,7 +19,7 @@ import {
 } from "lucide-react";
 import "./database.css";
 
-type DBType = "supabase" | "mysql" | "sqlserver";
+type DBType = "supabase" | "mysql" | "sqlserver" | "postgresql";
 
 interface Connection {
   id: string;

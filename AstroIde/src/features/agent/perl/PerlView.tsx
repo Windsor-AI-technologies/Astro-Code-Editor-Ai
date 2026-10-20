@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { useState, useRef, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useWorkspaceCtx } from "../../../contexts/WorkspaceContext";
@@ -14,6 +20,16 @@ interface PerlMessage {
 
 let msgCount = Date.now();
 const nextMsgId = () => `msg-${++msgCount}-${Math.random().toString(36).slice(2, 6)}`;
+
+// Token de sesión para el backend (igual que el resto de la app)
+function getAuthHeaders(): Record<string, string> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  try {
+    const session = JSON.parse(localStorage.getItem("astro-session") || "null");
+    if (session?.access_token) headers["Authorization"] = `Bearer ${session.access_token}`;
+  } catch {}
+  return headers;
+}
 
 // ── TTS (Edge TTS via Rust — high quality Microsoft voices) ──
 async function speak(text: string, onEnd?: () => void) {
@@ -61,11 +77,12 @@ export default function PerlView() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Load voices (some browsers need this)
+  // Load voices (some browsers/webviews lack speechSynthesis)
   useEffect(() => {
-    window.speechSynthesis.getVoices();
-    window.speechSynthesis.onvoiceschanged = () =>
-      window.speechSynthesis.getVoices();
+    const synth = window.speechSynthesis;
+    if (!synth || typeof synth.getVoices !== "function") return;
+    synth.getVoices();
+    synth.onvoiceschanged = () => synth.getVoices();
   }, []);
 
   // ── Process transcribed text through LLM and speak response ──
@@ -223,7 +240,7 @@ Si el usuario pregunta sobre el editor, sus funciones, o qué puede hacer, usa e
         try {
           const res = await fetch(`${AI_BACKEND}/ai/chat`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: getAuthHeaders(),
             body: JSON.stringify({
               model: "llama-3.3-70b-versatile",
               messages: msgPayload,
@@ -336,7 +353,7 @@ Si el usuario pregunta sobre el editor, sus funciones, o qué puede hacer, usa e
 
         const res = await fetch(`${AI_BACKEND_W}/ai/whisper`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: getAuthHeaders(),
           body: JSON.stringify({ audio_base64: base64 }),
         });
         const data = await res.json();
@@ -416,6 +433,12 @@ Si el usuario pregunta sobre el editor, sus funciones, o qué puede hacer, usa e
 
   // ── Start VAD + listening ──
   const startListening = useCallback(async () => {
+    // Sin micrófono usable en este webview → modo texto
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+      setMicBlocked(true);
+      setStatus("idle");
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
@@ -510,7 +533,7 @@ Si el usuario pregunta sobre el editor, sus funciones, o qué puede hacer, usa e
       audioCtxRef.current = null;
     }
 
-    window.speechSynthesis.cancel();
+    window.speechSynthesis?.cancel?.();
     setIsListening(false);
     setIsSpeaking(false);
     setAudioLevel(0);
@@ -536,7 +559,7 @@ Si el usuario pregunta sobre el editor, sus funciones, o qué puede hacer, usa e
       if (audioCtxRef.current) {
         audioCtxRef.current.close();
       }
-      window.speechSynthesis.cancel();
+      window.speechSynthesis?.cancel?.();
     };
   }, []);
 

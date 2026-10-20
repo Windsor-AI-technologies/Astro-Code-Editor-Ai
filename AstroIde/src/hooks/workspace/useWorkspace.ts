@@ -1,8 +1,15 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { useState, useCallback, useEffect } from 'react';
 import type { FileEntry } from '../../types';
 import * as api from '../../services/tauri';
 import { disposeAllCompletionProviders } from '../../utils/completions';
 import { clearDocumentVersions } from '../../services/lsp-monaco-bridge';
+import { lspClient } from '../../services/lsp-client';
 import { loader } from '@monaco-editor/react';
 
 /**
@@ -41,6 +48,7 @@ export function useWorkspace() {
 
     // Clean providers & LSP state
     disposeAllCompletionProviders();
+    await lspClient.stopAll();
     clearDocumentVersions();
 
     // Small tick for React to unmount old components

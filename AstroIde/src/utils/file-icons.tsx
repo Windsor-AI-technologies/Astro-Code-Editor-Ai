@@ -1,7 +1,9 @@
-// ── Material Icon Theme for AstroIde ─────────────────────────────────────────
-// Uses real SVG icons from the material-icon-theme package (MIT license).
-// Icons are served from public/icons/ as static assets.
-
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 interface IconProps {
   size?: number;
 }

@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { useState, useEffect, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Plus, X, Terminal as TermIcon, ChevronDown } from 'lucide-react';

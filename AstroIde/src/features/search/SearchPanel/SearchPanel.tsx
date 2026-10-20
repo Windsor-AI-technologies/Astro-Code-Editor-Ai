@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { useState } from 'react';
 import { Search, Replace, ChevronDown, ChevronRight, File } from 'lucide-react';
 import './SearchPanel.css';

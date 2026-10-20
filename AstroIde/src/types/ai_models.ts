@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 export type AIMode = "engineer" | "ask" | "plan";
 
 export interface AIModel {

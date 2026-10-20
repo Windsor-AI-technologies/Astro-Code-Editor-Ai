@@ -1,8 +1,15 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { useTabsCtx } from '../../../contexts/TabsContext';
 import { useSettingsCtx } from '../../../contexts/SettingsContext';
 import { useUICtx } from '../../../contexts/UIContext';
 import CommandPalette from '../../../components/ui/CommandPalette/CommandPalette';
 import EditorCommandPalette from '../../../features/editor/EditorCommandPalette/EditorCommandPalette';
+import QuickPick from '../../../components/ui/QuickPick/QuickPick';
 
 export default function PalettesSlot() {
   const { editorRef } = useTabsCtx();
@@ -15,6 +22,7 @@ export default function PalettesSlot() {
         currentTheme={themeId} onThemeChange={(id) => updateSetting('workbench.colorTheme', id)} />
       <EditorCommandPalette visible={editorCmdPaletteOpen}
         onClose={() => setEditorCmdPaletteOpen(false)} editorRef={editorRef} />
+      <QuickPick />
     </>
   );
 }

@@ -1,4 +1,10 @@
 
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import type { AppSettings } from "../../../types";
 import { THEMES} from "../../../themes";
 

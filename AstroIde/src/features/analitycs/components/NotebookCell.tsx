@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import MonacoEditor, { type OnMount, type BeforeMount } from "@monaco-editor/react";
 import { registerAllMonacoThemes } from "../../../themes";
 import type { Cell } from "../types";

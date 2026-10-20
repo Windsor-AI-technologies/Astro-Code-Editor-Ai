@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import type * as Monaco from 'monaco-editor';
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -91,11 +97,165 @@ export function colorsToVars(c: ThemeColors): Record<string, string> {
   };
 }
 
+const VSCODE_CONTROL_KEYWORDS = [
+  'break', 'case', 'catch', 'checked', 'continue', 'default', 'do', 'else',
+  'finally', 'fixed', 'for', 'foreach', 'goto', 'if', 'in', 'lock', 'return',
+  'switch', 'throw', 'try', 'unchecked', 'unsafe', 'using', 'when', 'while',
+  'yield',
+];
+
+function vscodeTokenRules(dark: boolean): Monaco.editor.ITokenThemeRule[] {
+  const p = dark
+    ? {
+        comment: '6a9955',
+        keyword: '569cd6',
+        controlKeyword: 'c586c0',
+        operator: 'd4d4d4',
+        type: '4ec9b0',
+        function: 'dcdcaa',
+        variable: '9cdcfe',
+        constant: '4fc1ff',
+        number: 'b5cea8',
+        string: 'ce9178',
+        stringEscape: 'd7ba7d',
+        regexp: 'd16969',
+        tag: '569cd6',
+        attributeName: '9cdcfe',
+        attributeValue: 'ce9178',
+        invalid: 'f44747',
+        preprocessor: '569cd6',
+      }
+    : {
+        comment: '008000',
+        keyword: '0000ff',
+        controlKeyword: 'af00db',
+        operator: '000000',
+        type: '267f99',
+        function: '795e26',
+        variable: '001080',
+        constant: '0070c1',
+        number: '098658',
+        string: 'a31515',
+        stringEscape: 'ee0000',
+        regexp: '811f3f',
+        tag: '800000',
+        attributeName: 'e50000',
+        attributeValue: '0000ff',
+        invalid: 'cd3131',
+        preprocessor: '0000ff',
+      };
+
+  return [
+    { token: 'comment', foreground: p.comment },
+    { token: 'keyword', foreground: p.keyword },
+    ...VSCODE_CONTROL_KEYWORDS.map(word => ({
+      token: `keyword.${word}`,
+      foreground: p.controlKeyword,
+    })),
+    { token: 'keyword.control', foreground: p.controlKeyword },
+    { token: 'keyword.operator', foreground: p.operator },
+    { token: 'keyword.operator.new', foreground: p.keyword },
+    { token: 'keyword.operator.expression', foreground: p.keyword },
+    { token: 'keyword.operator.cast', foreground: p.keyword },
+    { token: 'keyword.operator.sizeof', foreground: p.keyword },
+    { token: 'keyword.operator.alignof', foreground: p.keyword },
+    { token: 'keyword.operator.typeid', foreground: p.keyword },
+    { token: 'keyword.operator.alignas', foreground: p.keyword },
+    { token: 'keyword.operator.instanceof', foreground: p.keyword },
+    { token: 'keyword.other.unit', foreground: p.number },
+    { token: 'storage', foreground: p.keyword },
+    { token: 'storage.type', foreground: p.keyword },
+    { token: 'storage.modifier', foreground: p.keyword },
+    { token: 'constant', foreground: p.constant },
+    { token: 'constant.language', foreground: p.keyword },
+    { token: 'constant.numeric', foreground: p.number },
+    { token: 'constant.character.escape', foreground: p.stringEscape },
+    { token: 'number', foreground: p.number },
+    { token: 'string', foreground: p.string },
+    { token: 'string.escape', foreground: p.stringEscape },
+    { token: 'string.regexp', foreground: p.regexp },
+    { token: 'regexp', foreground: p.regexp },
+    { token: 'string.invalid', foreground: p.invalid },
+    { token: 'invalid', foreground: p.invalid },
+    { token: 'type', foreground: p.type },
+    { token: 'type.identifier', foreground: p.type },
+    { token: 'namespace', foreground: p.type },
+    { token: 'function', foreground: p.function },
+    { token: 'variable', foreground: p.variable },
+    { token: 'variable.parameter', foreground: p.variable },
+    { token: 'variable.other.constant', foreground: p.constant },
+    { token: 'variable.other.enummember', foreground: p.constant },
+    { token: 'tag', foreground: p.tag },
+    { token: 'attribute.name', foreground: p.attributeName },
+    { token: 'attribute.value', foreground: p.attributeValue },
+    { token: 'delimiter', foreground: p.operator },
+    { token: 'operator', foreground: p.operator },
+    { token: 'keyword.directive', foreground: p.preprocessor },
+    { token: 'directive', foreground: p.preprocessor },
+  ];
+}
+
+export interface SemanticTokenColors {
+  type?: string;
+  function?: string;
+  variable?: string;
+  field?: string;
+  parameter?: string;
+  constant?: string;
+}
+
+/**
+ * Deriva reglas para los semantic tokens de C# a partir de la paleta del tema.
+ * Monaco no tiene TextMate: sin estas reglas, los identificadores quedan con el
+ * color base y C# se ve mucho más apagado que en VS Code.
+ *
+ * `overrides` permite fijar los colores que VS Code resuelve al aplicar sus
+ * reglas semánticas (por ejemplo, clases en teal aunque el tema base use
+ * naranja para `entity.name`).
+ */
+function semanticTokenRules(
+  rules: Monaco.editor.ITokenThemeRule[],
+  overrides: SemanticTokenColors = {},
+): Monaco.editor.ITokenThemeRule[] {
+  const foreground = (token: string) =>
+    rules.find(rule => rule.token === token)?.foreground;
+
+  const type = overrides.type
+    ?? foreground('type')
+    ?? foreground('type.identifier')
+    ?? foreground('entity.name');
+  const fn = overrides.function ?? foreground('function') ?? foreground('entity.name.function');
+  const variable = overrides.variable ?? foreground('variable.other') ?? foreground('variable');
+  const field = overrides.field ?? variable;
+  const parameter = overrides.parameter ?? foreground('variable.parameter') ?? variable;
+  const constant = overrides.constant
+    ?? foreground('constant')
+    ?? foreground('variable.other.enummember');
+
+  const semantic: Monaco.editor.ITokenThemeRule[] = [];
+  const add = (tokens: string[], color?: string) => {
+    if (!color) return;
+    for (const token of tokens) {
+      semantic.push({ token, foreground: color });
+    }
+  };
+
+  add(['class', 'interface', 'struct', 'enum', 'typeParameter', 'namespace'], type);
+  add(['method', 'event'], fn);
+  add(['property', 'variable'], variable);
+  add(['field'], field);
+  add(['parameter'], parameter);
+  add(['enumMember', 'constant'], constant);
+
+  return semantic;
+}
+
 // Helper para crear theme data
 function mkTheme(
   base: 'vs-dark' | 'vs' | 'hc-black',
   colors: Record<string, string>,
-  rules: Monaco.editor.ITokenThemeRule[]
+  rules: Monaco.editor.ITokenThemeRule[],
+  semanticColors?: SemanticTokenColors,
 ): Monaco.editor.IStandaloneThemeData {
   const bg = colors['editor.background'] ?? '#1e1e1e';
   // Menu semi-transparente: hex + 'b3' = 70% opacity (RRGGBBAA format)
@@ -107,7 +267,12 @@ function mkTheme(
     'menu.foreground': colors['editor.foreground'] ?? '#d4d4d4',
     'menu.selectionBackground': colors['editor.selectionBackground'] ?? '#264f78',
   };
-  return { base, inherit: true, colors: { ...widgetDefaults, ...colors }, rules };
+  return {
+    base,
+    inherit: true,
+    colors: { ...widgetDefaults, ...colors },
+    rules: [...rules, ...semanticTokenRules(rules, semanticColors)],
+  };
 }
 
 export const THEMES: ThemeDefinition[] = [
@@ -191,21 +356,7 @@ export const THEMES: ThemeDefinition[] = [
       'editorCursor.foreground': '#aeafad',
       'editorLineNumber.foreground': '#5a5a5a',
       'editorLineNumber.activeForeground': '#c6c6c6',
-    }, [
-      { token: 'comment', foreground: '6a9955', fontStyle: 'italic' },
-      { token: 'keyword', foreground: '569cd6' },
-      { token: 'string', foreground: 'ce9178' },
-      { token: 'number', foreground: 'b5cea8' },
-      { token: 'type', foreground: '4ec9b0' },
-      { token: 'function', foreground: 'dcdcaa' },
-      { token: 'variable', foreground: '9cdcfe' },
-      { token: 'constant', foreground: '4fc1ff' },
-      { token: 'operator', foreground: 'd4d4d4' },
-      { token: 'tag', foreground: '569cd6' },
-      { token: 'attribute.name', foreground: '9cdcfe' },
-      { token: 'attribute.value', foreground: 'ce9178' },
-      { token: 'delimiter', foreground: 'd4d4d4' },
-    ]),
+    }, vscodeTokenRules(true)),
   },
 
   // ━━━━━━━━━━━━━━ DRACULA ━━━━━━━━━━━━━━
@@ -467,27 +618,13 @@ export const THEMES: ThemeDefinition[] = [
     },
     monaco: mkTheme('vs', {
       'editor.background': '#ffffff',
-      'editor.foreground': '#333333',
+      'editor.foreground': '#000000',
       'editor.lineHighlightBackground': '#f5f5f5',
       'editor.selectionBackground': '#add6ff',
-      'editorCursor.foreground': '#333333',
+      'editorCursor.foreground': '#000000',
       'editorLineNumber.foreground': '#999999',
       'editorLineNumber.activeForeground': '#333333',
-    }, [
-      { token: 'comment', foreground: '008000', fontStyle: 'italic' },
-      { token: 'keyword', foreground: '0000ff' },
-      { token: 'string', foreground: 'a31515' },
-      { token: 'number', foreground: '098658' },
-      { token: 'type', foreground: '267f99' },
-      { token: 'function', foreground: '795e26' },
-      { token: 'variable', foreground: '001080' },
-      { token: 'constant', foreground: '0070c1' },
-      { token: 'operator', foreground: '333333' },
-      { token: 'tag', foreground: '800000' },
-      { token: 'attribute.name', foreground: 'ff0000' },
-      { token: 'attribute.value', foreground: '0451a5' },
-      { token: 'delimiter', foreground: '333333' },
-    ]),
+    }, vscodeTokenRules(false)),
   },
 
   // ━━━━━━━━━━━━━━ ONE DARK PRO ━━━━━━━━━━━━━━
@@ -742,9 +879,14 @@ export const THEMES: ThemeDefinition[] = [
         { token: 'keyword', foreground: 'ff7b72' },
         { token: 'keyword.ts', foreground: 'ff7b72' },
         { token: 'keyword.js', foreground: 'ff7b72' },
-        { token: 'keyword.control', foreground: 'ff7b72' },
         { token: 'keyword.operator', foreground: 'ff7b72' },
         { token: 'keyword.other', foreground: 'ff7b72' },
+        // Keywords de control (return, if, foreach...). En VS Code heredan
+        // #C586C0 de Dark+; `using` se mantiene como directiva (salmón).
+        { token: 'keyword.control', foreground: 'c586c0' },
+        ...VSCODE_CONTROL_KEYWORDS
+          .filter(word => word !== 'using')
+          .map(word => ({ token: `keyword.${word}`, foreground: 'c586c0' })),
         // Storage (var, let, const, function, class, interface, type)
         { token: 'storage', foreground: 'ff7b72' },
         { token: 'storage.type', foreground: 'ff7b72' },
@@ -770,6 +912,7 @@ export const THEMES: ThemeDefinition[] = [
         { token: 'type.ts', foreground: 'ffa657' },
         { token: 'type.identifier', foreground: 'ffa657' },
         { token: 'type.identifier.ts', foreground: 'ffa657' },
+        { token: 'namespace', foreground: '4ec9b0' },
         // Functions
         { token: 'function', foreground: 'd2a8ff' },
         { token: 'function.call', foreground: 'd2a8ff' },
@@ -828,7 +971,14 @@ export const THEMES: ThemeDefinition[] = [
         // Annotations / decorators
         { token: 'annotation', foreground: 'ffa657' },
         { token: 'meta', foreground: '8b949e' },
-      ]),
+      ], {
+        type: '4ec9b0',
+        function: 'd2a8ff',
+        variable: 'c9d1d9',
+        field: '9cdcfe',
+        parameter: '9cdcfe',
+        constant: '79c0ff',
+      }),
     };
   })(),
 ];

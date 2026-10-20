@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { type IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { faCircle, faStop, faSquare, faDiamond, faRightLeft, faLayerGroup, faDatabase, faStickyNote, faBolt, faLightbulb, faToggleOn, faBatteryFull, faMicrochip, faWaveSquare, faPlug, faArrowDown, faCircleNodes, faTriangleExclamation, faTable, faLink, faCubes, faListOl, faFont, faHashtag, faQuestion, faBan,
 } from "@fortawesome/free-solid-svg-icons";

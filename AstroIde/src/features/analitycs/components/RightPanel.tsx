@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { useState } from "react";
 import type { Variable } from "../types";
 import { installPackage as installPkg } from "../services/pyodide";

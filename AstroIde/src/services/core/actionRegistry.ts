@@ -1,7 +1,9 @@
-// ── Action Registry ──────────────────────────────────────────────────────────
-// Central command system. Any module, feature, or extension can register actions.
-// The command palette, shortcuts, menus, and extensions all consume from here.
-
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 export interface Action {
   id: string;
   title: string;

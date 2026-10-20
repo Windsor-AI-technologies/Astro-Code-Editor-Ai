@@ -56,6 +56,14 @@
   color: #4ec9b0;
 }
 
+.dbg-btn.run {
+  color: #89d185;
+}
+
+.dbg-btn.stop {
+  color: #f48771;
+}
+
 /* Status */
 .debug-status {
   padding: 6px 10px;
@@ -112,6 +120,23 @@
   background: var(--bg-3);
   padding: 1px 5px;
   border-radius: 8px;
+}
+
+.debug-clear-btn {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+}
+
+.debug-clear-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .debug-section-body {
@@ -273,4 +298,63 @@
   color: var(--text-primary);
   white-space: pre-wrap;
   word-break: break-all;
+}
+
+.debug-output-line.stream-stderr,
+.debug-output-chunk.stream-stderr {
+  color: #f48771;
+}
+
+.debug-output-line.stream-system,
+.debug-output-chunk.stream-system {
+  color: #4ec9b0;
+}
+
+.debug-output-line.stream-stdin,
+.debug-output-chunk.stream-stdin {
+  color: #89d185;
+}
+
+.debug-run-output {
+  padding: 1px 14px;
+  color: var(--text-primary);
+  font-size: 11px;
+  font-family: var(--font-mono, monospace);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.debug-output-chunk.stream-system {
+  display: block;
+}
+
+.debug-stdin {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 8px;
+  border-top: 1px dashed var(--border);
+}
+
+.debug-stdin-prompt {
+  color: #4ec9b0;
+  font-size: 12px;
+  font-family: var(--font-mono, monospace);
+}
+
+.debug-stdin-input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  outline: none;
+  background: var(--bg-3);
+  color: var(--text-primary);
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+}
+
+.debug-stdin-input:focus {
+  border-color: var(--accent);
 }

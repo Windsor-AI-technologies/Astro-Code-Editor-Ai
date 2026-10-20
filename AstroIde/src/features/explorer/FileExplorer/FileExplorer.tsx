@@ -1,12 +1,25 @@
-import { useState, useCallback, useEffect } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
+import { useState, useCallback, useEffect } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import {
-  ChevronRight, ChevronDown, File, Folder, FolderOpen,
-  FilePlus, FolderPlus, Trash2, Edit2
-} from 'lucide-react';
-import type { FileEntry } from '../../../types';
-import { getFileIcon, getFolderIcon } from '../../../utils/file-icons';
-import './FileExplorer.css';
+  ChevronRight,
+  ChevronDown,
+  File,
+  Folder,
+  FolderOpen,
+  FilePlus,
+  FolderPlus,
+  Trash2,
+  Edit2,
+} from "lucide-react";
+import type { FileEntry } from "../../../types";
+import { getFileIcon, getFolderIcon } from "../../../utils/file-icons";
+import "./FileExplorer.css";
 
 interface FileExplorerProps {
   rootPath: string | null;
@@ -14,7 +27,7 @@ interface FileExplorerProps {
   onFileSelect: (path: string) => void;
   onTreeChange: () => void;
   activeFilePath: string | null;
-  iconTheme?: 'material' | 'none';
+  iconTheme?: "material" | "none";
 }
 
 interface TreeNodeProps {
@@ -23,7 +36,7 @@ interface TreeNodeProps {
   onFileSelect: (path: string) => void;
   onTreeChange: () => void;
   activeFilePath: string | null;
-  iconTheme: 'material' | 'none';
+  iconTheme: "material" | "none";
   selectedFolder: string | null;
   onSelectFolder: (path: string | null) => void;
   refreshCounter: number;
@@ -32,15 +45,27 @@ interface TreeNodeProps {
 }
 
 function TreeNode({
-  entry, depth, onFileSelect, onTreeChange, activeFilePath, iconTheme,
-  selectedFolder, onSelectFolder, refreshCounter, onDraggedOver, dragTarget
+  entry,
+  depth,
+  onFileSelect,
+  onTreeChange,
+  activeFilePath,
+  iconTheme,
+  selectedFolder,
+  onSelectFolder,
+  refreshCounter,
+  onDraggedOver,
+  dragTarget,
 }: TreeNodeProps) {
   const [expanded, setExpanded] = useState(false);
   const [children, setChildren] = useState<FileEntry[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [newName, setNewName] = useState(entry.name);
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
 
   const isActive = !entry.is_dir && activeFilePath === entry.path;
   const isSelectedFolder = entry.is_dir && selectedFolder === entry.path;
@@ -50,7 +75,9 @@ function TreeNode({
     if (!entry.is_dir) return;
     setLoading(true);
     try {
-      const entries = await invoke<FileEntry[]>('read_dir', { path: entry.path });
+      const entries = await invoke<FileEntry[]>("read_dir", {
+        path: entry.path,
+      });
       setChildren(entries);
     } catch {
       setChildren([]);
@@ -79,7 +106,7 @@ function TreeNode({
   async function handleDelete(e: React.MouseEvent) {
     e.stopPropagation();
     if (!confirm(`¿Eliminar "${entry.name}"?`)) return;
-    await invoke('delete_path', { path: entry.path });
+    await invoke("delete_path", { path: entry.path });
     onTreeChange();
     setContextMenu(null);
   }
@@ -88,8 +115,8 @@ function TreeNode({
     if (newName && newName !== entry.name) {
       const parts = entry.path.split(/[\\/]/);
       parts[parts.length - 1] = newName;
-      const newPath = parts.join('/');
-      await invoke('rename_path', { oldPath: entry.path, newPath });
+      const newPath = parts.join("/");
+      await invoke("rename_path", { oldPath: entry.path, newPath });
       onTreeChange();
     }
     setRenaming(false);
@@ -98,22 +125,32 @@ function TreeNode({
 
   async function handleNewFile(e: React.MouseEvent) {
     e.stopPropagation();
-    const name = prompt('Nombre del archivo:');
+    const name = prompt("Nombre del archivo:");
     if (!name) return;
-    const base = entry.is_dir ? entry.path : entry.path.replace(/[\\/][^\\/]+$/, '');
-    await invoke('create_file', { path: `${base}/${name}` });
-    if (entry.is_dir) { setExpanded(true); await loadChildren(); }
+    const base = entry.is_dir
+      ? entry.path
+      : entry.path.replace(/[\\/][^\\/]+$/, "");
+    await invoke("create_file", { path: `${base}/${name}` });
+    if (entry.is_dir) {
+      setExpanded(true);
+      await loadChildren();
+    }
     onTreeChange();
     setContextMenu(null);
   }
 
   async function handleNewFolder(e: React.MouseEvent) {
     e.stopPropagation();
-    const name = prompt('Nombre de la carpeta:');
+    const name = prompt("Nombre de la carpeta:");
     if (!name) return;
-    const base = entry.is_dir ? entry.path : entry.path.replace(/[\\/][^\\/]+$/, '');
-    await invoke('create_dir', { path: `${base}/${name}` });
-    if (entry.is_dir) { setExpanded(true); await loadChildren(); }
+    const base = entry.is_dir
+      ? entry.path
+      : entry.path.replace(/[\\/][^\\/]+$/, "");
+    await invoke("create_dir", { path: `${base}/${name}` });
+    if (entry.is_dir) {
+      setExpanded(true);
+      await loadChildren();
+    }
     onTreeChange();
     setContextMenu(null);
   }
@@ -125,8 +162,8 @@ function TreeNode({
 
   // ── Drag & Drop ───────────────────────────────────────────────────────
   function handleDragStart(e: React.DragEvent) {
-    e.dataTransfer.setData('application/astro-path', entry.path);
-    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData("application/astro-path", entry.path);
+    e.dataTransfer.effectAllowed = "move";
     // Ghost image semi-transparente
     const el = e.currentTarget as HTMLElement;
     e.dataTransfer.setDragImage(el, 10, 10);
@@ -136,7 +173,7 @@ function TreeNode({
     if (!entry.is_dir) return;
     e.preventDefault();
     e.stopPropagation();
-    e.dataTransfer.dropEffect = 'move';
+    e.dataTransfer.dropEffect = "move";
     onDraggedOver(entry.path);
   }
 
@@ -147,11 +184,11 @@ function TreeNode({
 
     if (!entry.is_dir) return;
 
-    const sourcePath = e.dataTransfer.getData('application/astro-path');
+    const sourcePath = e.dataTransfer.getData("application/astro-path");
     if (!sourcePath || sourcePath === entry.path) return;
 
     try {
-      await invoke('move_path', { source: sourcePath, destFolder: entry.path });
+      await invoke("move_path", { source: sourcePath, destFolder: entry.path });
       setExpanded(true);
       await loadChildren();
       onTreeChange();
@@ -167,15 +204,28 @@ function TreeNode({
       {contextMenu && (
         <>
           <div className="ctx-overlay" onClick={() => setContextMenu(null)} />
-          <div className="context-menu" style={{ top: contextMenu.y, left: contextMenu.x }}>
+          <div
+            className="context-menu"
+            style={{ top: contextMenu.y, left: contextMenu.x }}
+          >
             {entry.is_dir && (
               <>
-                <button onClick={handleNewFile}><FilePlus size={13} /> Nuevo archivo</button>
-                <button onClick={handleNewFolder}><FolderPlus size={13} /> Nueva carpeta</button>
+                <button onClick={handleNewFile}>
+                  <FilePlus size={13} /> Nuevo archivo
+                </button>
+                <button onClick={handleNewFolder}>
+                  <FolderPlus size={13} /> Nueva carpeta
+                </button>
                 <div className="ctx-sep" />
               </>
             )}
-            <button onClick={() => { setRenaming(true); setNewName(entry.name); setContextMenu(null); }}>
+            <button
+              onClick={() => {
+                setRenaming(true);
+                setNewName(entry.name);
+                setContextMenu(null);
+              }}
+            >
               <Edit2 size={13} /> Renombrar
             </button>
             <button className="danger" onClick={handleDelete}>
@@ -186,7 +236,7 @@ function TreeNode({
       )}
 
       <div
-        className={`tree-node ${isActive ? 'active' : ''} ${entry.is_dir ? 'is-dir' : ''} ${isSelectedFolder ? 'selected-folder' : ''} ${isDragTarget ? 'drag-over' : ''}`}
+        className={`tree-node ${isActive ? "active" : ""} ${entry.is_dir ? "is-dir" : ""} ${isSelectedFolder ? "selected-folder" : ""} ${isDragTarget ? "drag-over" : ""}`}
         style={{ paddingLeft: `${indent + 8}px` }}
         onClick={handleClick}
         onContextMenu={handleContextMenu}
@@ -199,24 +249,38 @@ function TreeNode({
         {entry.is_dir ? (
           <>
             <span className="tree-arrow">
-              {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+              {expanded ? (
+                <ChevronDown size={12} />
+              ) : (
+                <ChevronRight size={12} />
+              )}
             </span>
             <span className="tree-icon dir">
-              {iconTheme === 'material' ? (() => {
-                const folder = getFolderIcon(entry.name);
-                const Icon = expanded ? folder.open : folder.closed;
-                return <Icon size={16} />;
-              })() : (expanded ? <FolderOpen size={14} /> : <Folder size={14} />)}
+              {iconTheme === "material" ? (
+                (() => {
+                  const folder = getFolderIcon(entry.name);
+                  const Icon = expanded ? folder.open : folder.closed;
+                  return <Icon size={16} />;
+                })()
+              ) : expanded ? (
+                <FolderOpen size={14} />
+              ) : (
+                <Folder size={14} />
+              )}
             </span>
           </>
         ) : (
           <>
             <span className="tree-arrow" />
             <span className="tree-icon file">
-              {iconTheme === 'material' ? (() => {
-                const Icon = getFileIcon(entry.name);
-                return <Icon size={16} />;
-              })() : <File size={14} />}
+              {iconTheme === "material" ? (
+                (() => {
+                  const Icon = getFileIcon(entry.name);
+                  return <Icon size={16} />;
+                })()
+              ) : (
+                <File size={14} />
+              )}
             </span>
           </>
         )}
@@ -226,13 +290,13 @@ function TreeNode({
             className="rename-input"
             value={newName}
             autoFocus
-            onChange={e => setNewName(e.target.value)}
+            onChange={(e) => setNewName(e.target.value)}
             onBlur={handleRename}
-            onKeyDown={e => {
-              if (e.key === 'Enter') handleRename();
-              if (e.key === 'Escape') setRenaming(false);
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleRename();
+              if (e.key === "Escape") setRenaming(false);
             }}
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           />
         ) : (
           <span className="tree-name">{entry.name}</span>
@@ -245,26 +309,40 @@ function TreeNode({
           onDragOver={handleDragOver}
           onDrop={handleDrop}
         >
-          {loading && <div className="tree-empty" style={{ paddingLeft: `${indent + 28}px` }}>...</div>}
-          {!loading && children && children.length === 0 && (
-            <div className="tree-empty" style={{ paddingLeft: `${indent + 28}px` }}>vacío</div>
+          {loading && (
+            <div
+              className="tree-empty"
+              style={{ paddingLeft: `${indent + 28}px` }}
+            >
+              ...
+            </div>
           )}
-          {!loading && children && children.map(child => (
-            <TreeNode
-              key={child.path}
-              entry={child}
-              depth={depth + 1}
-              onFileSelect={onFileSelect}
-              onTreeChange={onTreeChange}
-              activeFilePath={activeFilePath}
-              iconTheme={iconTheme}
-              selectedFolder={selectedFolder}
-              onSelectFolder={onSelectFolder}
-              refreshCounter={refreshCounter}
-              onDraggedOver={onDraggedOver}
-              dragTarget={dragTarget}
-            />
-          ))}
+          {!loading && children && children.length === 0 && (
+            <div
+              className="tree-empty"
+              style={{ paddingLeft: `${indent + 28}px` }}
+            >
+              vacío
+            </div>
+          )}
+          {!loading &&
+            children &&
+            children.map((child) => (
+              <TreeNode
+                key={child.path}
+                entry={child}
+                depth={depth + 1}
+                onFileSelect={onFileSelect}
+                onTreeChange={onTreeChange}
+                activeFilePath={activeFilePath}
+                iconTheme={iconTheme}
+                selectedFolder={selectedFolder}
+                onSelectFolder={onSelectFolder}
+                refreshCounter={refreshCounter}
+                onDraggedOver={onDraggedOver}
+                dragTarget={dragTarget}
+              />
+            ))}
         </div>
       )}
     </div>
@@ -272,40 +350,45 @@ function TreeNode({
 }
 
 export default function FileExplorer({
-  rootPath, tree, onFileSelect, onTreeChange, activeFilePath, iconTheme = 'material'
+  rootPath,
+  tree,
+  onFileSelect,
+  onTreeChange,
+  activeFilePath,
+  iconTheme = "material",
 }: FileExplorerProps) {
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [refreshCounter, setRefreshCounter] = useState(0);
   const [dragTarget, setDragTarget] = useState<string | null>(null);
 
   function triggerRefresh() {
-    setRefreshCounter(c => c + 1);
+    setRefreshCounter((c) => c + 1);
     onTreeChange();
   }
 
   async function handleNewRootFile() {
     if (!rootPath) return;
-    const name = prompt('Nombre del archivo:');
+    const name = prompt("Nombre del archivo:");
     if (!name) return;
     const base = selectedFolder ?? rootPath;
-    await invoke('create_file', { path: `${base}/${name}` });
+    await invoke("create_file", { path: `${base}/${name}` });
     triggerRefresh();
   }
 
   async function handleNewRootFolder() {
     if (!rootPath) return;
-    const name = prompt('Nombre de la carpeta:');
+    const name = prompt("Nombre de la carpeta:");
     if (!name) return;
     const base = selectedFolder ?? rootPath;
-    await invoke('create_dir', { path: `${base}/${name}` });
+    await invoke("create_dir", { path: `${base}/${name}` });
     triggerRefresh();
   }
 
   // Drop en la raíz del explorador (mover a raíz)
   function handleRootDragOver(e: React.DragEvent) {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    setDragTarget('__root__');
+    e.dataTransfer.dropEffect = "move";
+    setDragTarget("__root__");
   }
 
   function handleRootDragLeave() {
@@ -316,40 +399,46 @@ export default function FileExplorer({
     e.preventDefault();
     setDragTarget(null);
     if (!rootPath) return;
-    const sourcePath = e.dataTransfer.getData('application/astro-path');
+    const sourcePath = e.dataTransfer.getData("application/astro-path");
     if (!sourcePath) return;
     try {
-      await invoke('move_path', { source: sourcePath, destFolder: rootPath });
+      await invoke("move_path", { source: sourcePath, destFolder: rootPath });
       triggerRefresh();
-    } catch { /* silencioso */ }
+    } catch {
+      /* silencioso */
+    }
   }
 
   return (
     <div className="file-explorer">
       <div className="explorer-header">
         <span className="explorer-title">
-          {rootPath ? rootPath.split(/[\\/]/).pop() : 'EXPLORADOR'}
+          {rootPath ? rootPath.split(/[\\/]/).pop() : "EXPLORADOR"}
         </span>
         {rootPath && (
           <div className="explorer-actions">
-            <button title="Nuevo archivo" onClick={handleNewRootFile}><FilePlus size={14} /></button>
-            <button title="Nueva carpeta" onClick={handleNewRootFolder}><FolderPlus size={14} /></button>
+            <button title="Nuevo archivo" onClick={handleNewRootFile}>
+              <FilePlus size={14} />
+            </button>
+            <button title="Nueva carpeta" onClick={handleNewRootFolder}>
+              <FolderPlus size={14} />
+            </button>
           </div>
         )}
       </div>
 
       <div
-        className={`explorer-tree ${dragTarget === '__root__' ? 'drag-over-root' : ''}`}
+        className={`explorer-tree ${dragTarget === "__root__" ? "drag-over-root" : ""}`}
         onDragOver={handleRootDragOver}
         onDragLeave={handleRootDragLeave}
         onDrop={handleRootDrop}
       >
         {tree.length === 0 ? (
           <div className="explorer-empty">
-            {rootPath ? 'Carpeta vacía' : 'Abre una carpeta para comenzar'}
+            {rootPath ? "Carpeta vacía" : "Abre una carpeta para comenzar"}
           </div>
         ) : (
-          tree.map(entry => (
+          tree.map((entry) => (
             <TreeNode
               key={entry.path}
               entry={entry}

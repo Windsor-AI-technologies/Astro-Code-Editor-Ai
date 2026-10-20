@@ -1,13 +1,22 @@
-import { useState } from 'react';
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
+import { useEffect, useRef, useState } from 'react';
 import {
   Play, Square, Pause, SkipForward, ArrowDownToLine, ArrowUpFromLine,
-  RotateCcw, Circle, ChevronRight, ChevronDown, X, Terminal as TermIcon
+  RotateCcw, Circle, ChevronRight, ChevronDown, X, Terminal as TermIcon,
+  Bug, Eraser,
 } from 'lucide-react';
 import type { Breakpoint, CallFrame, Variable, DebugState } from '../../../hooks/debug/useDebugger';
+import type { RunOutput } from '../../../services/runner';
+import { urlToPath } from '../../../services/debugger';
 import './DebugPanel.css';
 
 interface DebugPanelProps {
-  // State
+  // Debug state
   debugState: DebugState;
   breakpoints: Breakpoint[];
   callFrames: CallFrame[];
@@ -16,7 +25,7 @@ interface DebugPanelProps {
   error: string | null;
   pausedFile: string | null;
   pausedLine: number | null;
-  // Actions
+  // Debug actions
   onStart: (file: string) => void;
   onStop: () => void;
   onResume: () => void;
@@ -27,8 +36,15 @@ interface DebugPanelProps {
   onRemoveBreakpoint: (file: string, line: number) => void;
   onEvaluate: (expr: string) => Promise<string>;
   onNavigateToFrame: (file: string, line: number) => void;
+  // Run (sin depurar)
+  runState: 'idle' | 'running';
+  runOutput: RunOutput[];
+  runInputAvailable: boolean;
+  onRun: (file: string) => void;
+  onStopRun: () => void;
+  onClearOutput: () => void;
+  onRunInput: (input: string) => Promise<void>;
   // Context
-  cwd?: string | null;
   activeFilePath?: string | null;
 }
 
@@ -38,11 +54,15 @@ export default function DebugPanel(props: DebugPanelProps) {
     pausedFile, pausedLine,
     onStart, onStop, onResume, onStepOver, onStepInto, onStepOut, onPause,
     onRemoveBreakpoint, onEvaluate, onNavigateToFrame,
+    runState, runOutput, runInputAvailable,
+    onRun, onStopRun, onClearOutput, onRunInput,
     activeFilePath,
   } = props;
 
   const [evalInput, setEvalInput] = useState('');
   const [evalResult, setEvalResult] = useState<string | null>(null);
+  const [stdinValue, setStdinValue] = useState('');
+  const outputRef = useRef<HTMLDivElement>(null);
   const [expandedSections, setExpandedSections] = useState({
     variables: true, callstack: true, breakpoints: true, output: true,
   });
@@ -57,15 +77,37 @@ export default function DebugPanel(props: DebugPanelProps) {
     setEvalResult(result);
   }
 
-  function handleStart() {
-    const file = activeFilePath ?? '';
-    if (!file) return;
-    onStart(file);
+  function handleStartDebug() {
+    if (!activeFilePath) return;
+    onStart(activeFilePath);
+  }
+
+  function handleRun() {
+    if (!activeFilePath) return;
+    onRun(activeFilePath);
+  }
+
+  async function handleStdinSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!runInputAvailable) return;
+    const value = stdinValue;
+    setStdinValue('');
+    await onRunInput(value);
   }
 
   const isIdle = debugState === 'idle';
   const isPaused = debugState === 'paused';
-  const isRunning = debugState === 'running';
+  const isDebugRunning = debugState === 'running';
+  const isExecuting = runState === 'running';
+
+  useEffect(() => {
+    if (!isExecuting) setStdinValue('');
+  }, [isExecuting]);
+
+  useEffect(() => {
+    const element = outputRef.current;
+    if (element) element.scrollTop = element.scrollHeight;
+  }, [output.length, runOutput.length]);
 
   return (
     <div className="debug-panel">
@@ -73,11 +115,24 @@ export default function DebugPanel(props: DebugPanelProps) {
       <div className="debug-toolbar">
         <span className="debug-title">DEPURADOR</span>
         <div className="debug-controls">
-          {isIdle ? (
-            <button className="dbg-btn start" onClick={handleStart} disabled={!activeFilePath} title="Iniciar debug (F5)">
-              <Play size={14} />
+          {isIdle && !isExecuting && (
+            <>
+              <button className="dbg-btn run" onClick={handleRun} disabled={!activeFilePath} title="Ejecutar sin depurar (Ctrl+F5)">
+                <Play size={14} />
+              </button>
+              <button className="dbg-btn start" onClick={handleStartDebug} disabled={!activeFilePath} title="Iniciar depuración (F5)">
+                <Bug size={14} />
+              </button>
+            </>
+          )}
+
+          {isIdle && isExecuting && (
+            <button className="dbg-btn stop" onClick={onStopRun} title="Detener ejecución (Shift+F5)">
+              <Square size={13} />
             </button>
-          ) : (
+          )}
+
+          {!isIdle && (
             <>
               {isPaused ? (
                 <button className="dbg-btn" onClick={onResume} title="Continuar (F5)"><Play size={13} /></button>
@@ -88,7 +143,7 @@ export default function DebugPanel(props: DebugPanelProps) {
               <button className="dbg-btn" onClick={onStepInto} disabled={!isPaused} title="Step Into (F11)"><ArrowDownToLine size={13} /></button>
               <button className="dbg-btn" onClick={onStepOut} disabled={!isPaused} title="Step Out (Shift+F11)"><ArrowUpFromLine size={13} /></button>
               <button className="dbg-btn" onClick={onStop} title="Detener (Shift+F5)"><Square size={13} /></button>
-              <button className="dbg-btn" onClick={handleStart} title="Reiniciar (Ctrl+Shift+F5)"><RotateCcw size={13} /></button>
+              <button className="dbg-btn" onClick={handleStartDebug} title="Reiniciar (Ctrl+Shift+F5)"><RotateCcw size={13} /></button>
             </>
           )}
         </div>
@@ -96,10 +151,11 @@ export default function DebugPanel(props: DebugPanelProps) {
 
       {/* ── Status ───────────────────────────────────────────────── */}
       <div className={`debug-status ${debugState}`}>
-        {isIdle && 'Listo para depurar'}
-        {isRunning && 'Ejecutando...'}
+        {isIdle && !isExecuting && 'Listo para ejecutar o depurar'}
+        {isIdle && isExecuting && 'Ejecutando...'}
+        {isDebugRunning && 'Depurando...'}
         {isPaused && pausedFile && `Pausado en ${pausedFile.split(/[\\/]/).pop()}:${pausedLine}`}
-        {error && <span className="debug-error">{error}</span>}
+        {error && <span className="debug-error"> · {error}</span>}
       </div>
 
       <div className="debug-body">
@@ -164,7 +220,7 @@ export default function DebugPanel(props: DebugPanelProps) {
                   <div
                     key={i}
                     className={`debug-frame-row ${i === 0 ? 'active' : ''}`}
-                    onClick={() => onNavigateToFrame(f.url.replace('file:///', '').replace(/\//g, '\\'), f.lineNumber)}
+                    onClick={() => onNavigateToFrame(urlToPath(f.url), f.lineNumber)}
                   >
                     <span className="debug-frame-name">{f.functionName}</span>
                     <span className="debug-frame-loc">{f.url.split(/[\\/]/).pop()}:{f.lineNumber}</span>
@@ -207,17 +263,54 @@ export default function DebugPanel(props: DebugPanelProps) {
           <div className="debug-section-header" onClick={() => toggleSection('output')}>
             {expandedSections.output ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
             <span>SALIDA</span>
+            {(output.length > 0 || runOutput.length > 0) && (
+              <button
+                className="debug-clear-btn"
+                title="Limpiar salida"
+                onClick={e => { e.stopPropagation(); onClearOutput(); }}
+              >
+                <Eraser size={11} />
+              </button>
+            )}
           </div>
           {expandedSections.output && (
-            <div className="debug-output">
-              {output.length === 0 ? (
+            <div className="debug-output" ref={outputRef}>
+              {output.length === 0 && runOutput.length === 0 ? (
                 <div className="debug-empty">Sin salida</div>
               ) : (
-                output.map((line, i) => (
-                  <div key={i} className="debug-output-line">{line}</div>
-                ))
+                <>
+                  {output.map((line, i) => (
+                    <div key={`dbg-${i}`} className="debug-output-line">{line}</div>
+                  ))}
+                  {runOutput.length > 0 && (
+                    <div className="debug-run-output">
+                      {runOutput.map((entry, i) => (
+                        <span
+                          key={`run-${i}`}
+                          className={`debug-output-chunk stream-${entry.stream}`}
+                        >
+                          {entry.stream === 'system' ? entry.text.replace(/\n+$/, '') : entry.text}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
             </div>
+          )}
+          {isExecuting && runInputAvailable && (
+            <form className="debug-stdin" onSubmit={handleStdinSubmit}>
+              <span className="debug-stdin-prompt" aria-hidden="true">›</span>
+              <input
+                className="debug-stdin-input"
+                value={stdinValue}
+                onChange={event => setStdinValue(event.target.value)}
+                placeholder="Entrada del programa · Enter para enviar"
+                aria-label="Entrada estándar del programa"
+                autoComplete="off"
+                spellCheck={false}
+              />
+            </form>
           )}
         </div>
       </div>

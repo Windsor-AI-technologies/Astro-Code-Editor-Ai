@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { useCallback } from 'react';
 import type * as Monaco from 'monaco-editor';
 import type { Tab, AppSettings } from '../../types';

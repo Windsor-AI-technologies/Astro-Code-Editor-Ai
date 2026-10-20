@@ -1,8 +1,30 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { useRef, useEffect, useState } from "react";
-import { Code2, Bot, Palette, Cpu, Database, Music } from "lucide-react";
+import {
+  Code2,
+  Bot,
+  Palette,
+  Cpu,
+  Database,
+  Music,
+} from "lucide-react";
 import "./ModeSwitcher.css";
 
-export type AppMode = "ide" | "agent" | "design" | "electronics" | "data" | "music" | "flowchart" | "chartScatter";
+export type AppMode =
+  | "ide"
+  | "agent"
+  | "design"
+  | "electronics"
+  | "data"
+  | "music"
+  | "flowchart"
+  | "chartScatter"
+  | "server";
 
 interface ModeSwitcherProps {
   mode: AppMode;

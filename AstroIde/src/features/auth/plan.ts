@@ -1,6 +1,12 @@
-// ══════════════════════════════════════════════
-// Plan & Feature Gating
-// ══════════════════════════════════════════════
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
+// ⚠️ TEMPORAL: todo gratis mientras se desarrolla. Poner en false para
+// volver a exigir plan pro en agent/electronics/analytics.
+const TEMP_FREE_ALL = true;
 
 export type PlanId = "free" | "pro" | "acrylic" | "mica";
 
@@ -33,6 +39,7 @@ export function setUserPlan(plan: UserPlan) {
 }
 
 export function canAccessFeature(feature: string): boolean {
+  if (TEMP_FREE_ALL) return true; // ⚠️ TEMPORAL
   const plan = getUserPlan();
   const required = LOCKED_FEATURES[feature];
   if (!required) return true; // Not locked
@@ -42,5 +49,6 @@ export function canAccessFeature(feature: string): boolean {
 }
 
 export function canAccessPerl(): boolean {
+  if (TEMP_FREE_ALL) return true; // ⚠️ TEMPORAL
   return getUserPlan().perlAddon;
 }

@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { AnalyticsProject } from "../types";

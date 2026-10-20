@@ -1,4 +1,10 @@
 
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 export default function Contenedores () {
   return (
     <div className="git-panel">

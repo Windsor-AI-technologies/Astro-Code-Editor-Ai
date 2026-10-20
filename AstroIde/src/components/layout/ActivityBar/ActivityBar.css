@@ -23,6 +23,15 @@
   gap: 7px;
 }
 
+.activity-top {
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.activity-top::-webkit-scrollbar {
+  display: none;
+}
+
 .activity-btn {
   display: flex;
   align-items: center;

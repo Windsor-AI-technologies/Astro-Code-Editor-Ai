@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { GitBranch, AlertCircle, CheckCircle2 } from 'lucide-react';
 import type { Tab } from '../../../types';
 import { getLanguageLabel } from '../../../utils/language';

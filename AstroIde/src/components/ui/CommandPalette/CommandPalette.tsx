@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { useState, useEffect, useRef } from 'react';
 import { Search, Palette } from 'lucide-react';
 import { THEMES, applyTheme } from '../../../themes';

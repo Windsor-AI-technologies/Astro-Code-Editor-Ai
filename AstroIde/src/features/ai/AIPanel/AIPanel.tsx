@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { useState, useRef, useEffect } from "react";
 import { Send, Trash2, PanelRightClose, Copy, Check, Key, CheckCheck, X } from "lucide-react";
 import type * as Monaco from "monaco-editor";

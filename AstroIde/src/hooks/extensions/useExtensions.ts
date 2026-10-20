@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { useState, useCallback, useEffect } from 'react';
 import type { VSXExtension, InstalledExtension, ExtensionInstallStatus } from '../../types';
 import * as api from '../../services/tauri';

@@ -1,7 +1,7 @@
-use std::fs;
-use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::fs;
+use std::path::PathBuf;
 
 const OPEN_VSX_API: &str = "https://open-vsx.org/api";
 
@@ -51,7 +51,8 @@ pub fn ext_search(query: String, offset: u32, size: u32) -> Result<Value, String
         .call()
         .map_err(|e| format!("Error al buscar: {}", e))?;
 
-    let json: Value = response.into_json()
+    let json: Value = response
+        .into_json()
         .map_err(|e: std::io::Error| format!("Error al parsear respuesta: {}", e))?;
 
     Ok(json)
@@ -67,7 +68,8 @@ pub fn ext_get_details(namespace: String, name: String) -> Result<Value, String>
         .call()
         .map_err(|e| format!("Error al obtener detalles: {}", e))?;
 
-    let json: Value = response.into_json()
+    let json: Value = response
+        .into_json()
         .map_err(|e: std::io::Error| format!("Error al parsear respuesta: {}", e))?;
 
     Ok(json)
@@ -121,7 +123,9 @@ pub fn ext_install(namespace: String, name: String, version: String) -> Result<S
         display_name: details["displayName"].as_str().unwrap_or(&name).to_string(),
         version: version.clone(),
         description: details["description"].as_str().unwrap_or("").to_string(),
-        icon: details["files"]["icon"].as_str().map(|s: &str| s.to_string()),
+        icon: details["files"]["icon"]
+            .as_str()
+            .map(|s: &str| s.to_string()),
         publisher: namespace.clone(),
         enabled: true,
         install_path: install_path.to_string_lossy().to_string(),
@@ -167,12 +171,11 @@ pub fn ext_set_enabled(id: String, enabled: bool) -> Result<(), String> {
 fn extract_vsix(vsix_path: &PathBuf, dest: &PathBuf) -> Result<(), String> {
     // .vsix is a zip file — extract extension/package.json and extension/ folder
     let file = fs::File::open(vsix_path).map_err(|e| e.to_string())?;
-    let mut archive = zip::ZipArchive::new(file)
-        .map_err(|e| format!("Error al abrir vsix: {}", e))?;
+    let mut archive =
+        zip::ZipArchive::new(file).map_err(|e| format!("Error al abrir vsix: {}", e))?;
 
     for i in 0..archive.len() {
-        let mut entry = archive.by_index(i)
-            .map_err(|e| e.to_string())?;
+        let mut entry = archive.by_index(i).map_err(|e| e.to_string())?;
         let entry_name = entry.name().to_string();
 
         // Only extract extension/ content and package.json
@@ -188,10 +191,8 @@ fn extract_vsix(vsix_path: &PathBuf, dest: &PathBuf) -> Result<(), String> {
             if let Some(parent) = out_path.parent() {
                 fs::create_dir_all(parent).map_err(|e| e.to_string())?;
             }
-            let mut out_file = fs::File::create(&out_path)
-                .map_err(|e| e.to_string())?;
-            std::io::copy(&mut entry, &mut out_file)
-                .map_err(|e| e.to_string())?;
+            let mut out_file = fs::File::create(&out_path).map_err(|e| e.to_string())?;
+            std::io::copy(&mut entry, &mut out_file).map_err(|e| e.to_string())?;
         }
     }
 

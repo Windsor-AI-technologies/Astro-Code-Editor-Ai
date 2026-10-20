@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { useWorkspaceCtx } from '../../../contexts/WorkspaceContext';
 import { useTabsCtx } from '../../../contexts/TabsContext';
 import { useSettingsCtx } from '../../../contexts/SettingsContext';
@@ -11,6 +17,7 @@ import GitPanel from '../../../features/git/GitPanel/GitPanel';
 import ExtensionsPanel from '../../../features/extensions/ExtensionsPanel/ExtensionsPanel';
 import DebugPanel from '../../../features/debug/DebugPanel/DebugPanel';
 import Contenedores from '../../../features/cloud/Cloude/cloude';
+import ToolchainsPanel from '../../../features/toolchains/ToolchainsPanel/ToolchainsPanel';
 
 interface SidebarSlotProps {
   position: 'left' | 'right';
@@ -43,6 +50,7 @@ export default function SidebarSlot({ position }: SidebarSlotProps) {
         {ui.activeView === 'search' && <SearchPanel />}
         {ui.activeView === 'git' && <GitPanel />}
         {ui.activeView === 'extensions' && <ExtensionsPanel />}
+        {ui.activeView === 'toolchains' && <ToolchainsPanel />}
         {ui.activeView === 'debug' && (
           <DebugPanel
             debugState={debug.state}
@@ -63,6 +71,13 @@ export default function SidebarSlot({ position }: SidebarSlotProps) {
             onRemoveBreakpoint={(file, line) => debug.toggleBreakpoint(file, line)}
             onEvaluate={debug.evaluate}
             onNavigateToFrame={(file, _line) => { openFile(file); }}
+            runState={debug.runState}
+            runOutput={debug.runOutput}
+            runInputAvailable={debug.runInputAvailable}
+            onRun={(file) => debug.run(file, rootPath ?? '', activeTab?.content)}
+            onStopRun={debug.stopRun}
+            onClearOutput={() => { debug.clearRunOutput(); debug.clearOutput(); }}
+            onRunInput={debug.sendRunInput}
             activeFilePath={activeTab?.path ?? null}
           />
         )}

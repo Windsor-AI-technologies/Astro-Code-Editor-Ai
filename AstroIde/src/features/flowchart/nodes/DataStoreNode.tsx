@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 
 export default function DataStoreNode({ data, selected }: NodeProps) {

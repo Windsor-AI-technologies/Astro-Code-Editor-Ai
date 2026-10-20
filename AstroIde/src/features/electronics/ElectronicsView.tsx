@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { Cpu, Zap, CircuitBoard, Gauge, Thermometer } from 'lucide-react';
 import './ElectronicsView.css';
 

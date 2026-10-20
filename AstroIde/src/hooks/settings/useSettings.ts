@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { useState, useEffect, useCallback } from 'react';
 import type { AppSettings } from '../../types';
 import { DEFAULT_SETTINGS } from '../../types';

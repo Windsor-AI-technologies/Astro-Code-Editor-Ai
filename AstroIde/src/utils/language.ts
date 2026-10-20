@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 const EXT_MAP: Record<string, string> = {
   // Web — JSX/TSX como lenguajes separados (Monaco los soporta nativo)
   js: 'javascript',

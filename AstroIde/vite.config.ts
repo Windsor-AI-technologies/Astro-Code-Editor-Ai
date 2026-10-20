@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 

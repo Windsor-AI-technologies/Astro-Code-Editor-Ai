@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Write};
-use std::process::{Command, Stdio, Child, ChildStdin};
+use std::process::{Child, ChildStdin, Command, Stdio};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use tauri::{AppHandle, Emitter};
@@ -50,8 +50,8 @@ pub fn spawn_terminal(
 
     let mut cmd = Command::new(&shell);
     cmd.stdin(Stdio::piped())
-       .stdout(Stdio::piped())
-       .stderr(Stdio::piped());
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
 
     if let Some(ref dir) = cwd {
         cmd.current_dir(dir);
@@ -122,11 +122,15 @@ pub fn write_terminal(
     data: String,
 ) -> Result<(), String> {
     let mut terminals = state.terminals.lock().unwrap();
-    let term = terminals.get_mut(&id).ok_or_else(|| format!("Terminal {} not found", id))?;
-    
+    let term = terminals
+        .get_mut(&id)
+        .ok_or_else(|| format!("Terminal {} not found", id))?;
+
     // Convertir \r a \r\n para Windows
     let data = data.replace('\r', "\r\n");
-    term.stdin.write_all(data.as_bytes()).map_err(|e| e.to_string())?;
+    term.stdin
+        .write_all(data.as_bytes())
+        .map_err(|e| e.to_string())?;
     term.stdin.flush().map_err(|e| e.to_string())?;
     Ok(())
 }
@@ -143,10 +147,7 @@ pub fn resize_terminal(
 }
 
 #[tauri::command]
-pub fn kill_terminal(
-    state: tauri::State<'_, Arc<TerminalState>>,
-    id: u32,
-) -> Result<(), String> {
+pub fn kill_terminal(state: tauri::State<'_, Arc<TerminalState>>, id: u32) -> Result<(), String> {
     let mut terminals = state.terminals.lock().unwrap();
     if let Some(term) = terminals.remove(&id) {
         kill_terminal_instance(term);
@@ -156,9 +157,7 @@ pub fn kill_terminal(
 
 /// Mata todas las terminales - usar al cambiar de proyecto para liberar toda la memoria
 #[tauri::command]
-pub fn kill_all_terminals(
-    state: tauri::State<'_, Arc<TerminalState>>,
-) -> Result<(), String> {
+pub fn kill_all_terminals(state: tauri::State<'_, Arc<TerminalState>>) -> Result<(), String> {
     let mut terminals = state.terminals.lock().unwrap();
     let all: Vec<(u32, TerminalInstance)> = terminals.drain().collect();
     // Liberar el lock antes de matar (wait puede ser lento)

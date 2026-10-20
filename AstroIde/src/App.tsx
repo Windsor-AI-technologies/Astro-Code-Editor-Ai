@@ -1,4 +1,10 @@
-import { useRef, useEffect, useMemo, useState } from "react";
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
+import { useRef, useEffect, useMemo, useCallback, useState } from "react";
 import type * as Monaco from "monaco-editor";
 import type { TerminalPanelHandle } from "./features/terminal/Terminal/TerminalPanel";
 
@@ -12,10 +18,12 @@ import { useAutoSave } from "./hooks/editor/useAutoSave";
 import { useKeyboard } from "./hooks/ui/useKeyboard";
 import { useResize } from "./hooks/ui/useResize";
 import { useDebugger } from "./hooks/debug/useDebugger";
+import { useRunner } from "./hooks/run/useRunner";
 import { useExtensions } from "./hooks/extensions/useExtensions";
 import { registerCoreActions } from "./services/core/coreActions";
-import { connectNotificationHandler } from "./services/core/astro";
-
+import { registerDotnetActions } from "./services/core/dotnetActions";
+import { openFolderDialog } from "./services/tauri";
+import { connectNotificationHandler, connectIslandHandler } from "./services/core/astro";
 import { WorkspaceContext } from "./contexts/WorkspaceContext";
 import { TabsContext } from "./contexts/TabsContext";
 import { SettingsContext } from "./contexts/SettingsContext";
@@ -42,6 +50,7 @@ export default function App() {
   const tabs = useTabs(editorRef);
   const ui = useUIState();
   const debugger_ = useDebugger();
+  const runnerState = useRunner();
   const extensions = useExtensions();
 
   const { save } = useSave({
@@ -79,6 +88,41 @@ export default function App() {
       editorRef.current = null;
     });
   }
+
+  // ── Ejecutar / Depurar (F5, Ctrl+F5, Shift+F5) ──────────────────────────
+  const activeFilePath = tabs.activeTab?.path ?? null;
+  const activeFileContent = tabs.activeTab?.content ?? undefined;
+
+  const handleStartDebug = useCallback(async () => {
+    if (!activeFilePath) {
+      ui.showNotification("Abre un archivo JavaScript para depurar");
+      return;
+    }
+    const ext = activeFilePath.split(".").pop()?.toLowerCase();
+    if (ext !== "js" && ext !== "mjs" && ext !== "cjs" && ext !== "ts") {
+      ui.showNotification("La depuración paso a paso está disponible para JS/TS");
+      return;
+    }
+    ui.openView("debug");
+    await debugger_.start(activeFilePath, workspace.rootPath ?? "");
+  }, [activeFilePath, workspace.rootPath]);
+
+  const handleRunActiveFile = useCallback(async () => {
+    if (!activeFilePath) {
+      ui.showNotification("Abre un archivo para ejecutar");
+      return;
+    }
+    ui.openView("debug");
+    await runnerState.run(activeFilePath, workspace.rootPath ?? "", activeFileContent);
+  }, [activeFilePath, workspace.rootPath, activeFileContent]);
+
+  const handleStopExecution = useCallback(async () => {
+    if (debugger_.state !== "idle") {
+      await debugger_.stop();
+    } else if (runnerState.running) {
+      await runnerState.stop();
+    }
+  }, [debugger_.state, runnerState.running]);
 
   async function handleOpenFile(path: string) {
     const ok = await tabs.openFile(path);
@@ -119,7 +163,13 @@ export default function App() {
     onToggleSettings: handleToggleSettings,
     onToggleTerminal: ui.toggleTerminal,
     onToggleAI: ui.toggleAI,
-    onCommandPalette: () => ui.setCmdPaletteOpen(true),
+    onCommandPalette: () => ui.setEditorCmdPaletteOpen(true),
+    onDebug: () => {
+      if (debugger_.state === "paused") debugger_.resume();
+      else if (debugger_.state === "idle") handleStartDebug();
+    },
+    onRun: handleRunActiveFile,
+    onStopExecution: handleStopExecution,
   });
 
   const sidebarLeft =
@@ -160,6 +210,7 @@ export default function App() {
   // ── Register core actions ───────────────────────────────────────────────
   useEffect(() => {
     connectNotificationHandler(ui.showNotification);
+    connectIslandHandler(ui.showIsland);
     const unregister = registerCoreActions({
       save,
       newFile: tabs.newFile,
@@ -170,17 +221,34 @@ export default function App() {
       toggleTerminal: ui.toggleTerminal,
       toggleAI: ui.toggleAI,
       toggleSettings: handleToggleSettings,
-      openCommandPalette: () => ui.setCmdPaletteOpen(true),
-      openFolder: () => {},
+      openCommandPalette: () => ui.setEditorCmdPaletteOpen(true),
+      openFolder: async () => {
+        const path = await openFolderDialog();
+        if (path) await handleOpenFolder(path);
+      },
       undo: editorActions.undo,
       redo: editorActions.redo,
       find: editorActions.find,
       formatDocument: () =>
         editorRef.current?.getAction("editor.action.formatDocument")?.run(),
       showNotification: ui.showNotification,
+      runFile: handleRunActiveFile,
+      debugFile: handleStartDebug,
+      stopExecution: handleStopExecution,
     });
-    return unregister;
-  }, [save, tabs.activeTabId]);
+    const unregisterDotnet = registerDotnetActions({
+      showNotification: ui.showNotification,
+      getRootPath: () => workspace.rootPath,
+      refreshTree: workspace.refreshTree,
+      openFolder: handleOpenFolder,
+      openOutput: () => ui.openView("debug"),
+      openToolchains: () => ui.openView("toolchains"),
+    });
+    return () => {
+      unregister();
+      unregisterDotnet();
+    };
+  }, [save, tabs.activeTabId, handleRunActiveFile, handleStartDebug, handleStopExecution]);
 
   // ── Context Values (memoized to prevent unnecessary re-renders) ─────────
   const workspaceCtx = useMemo(
@@ -248,6 +316,8 @@ export default function App() {
       showMessage: ui.showMessage,
       notification: ui.notification,
       showNotification: ui.showNotification,
+      island: ui.island,
+      showIsland: ui.showIsland,
     }),
     [
       ui.terminalVisible,
@@ -259,6 +329,10 @@ export default function App() {
       ui.editorCmdPaletteOpen,
       ui.cursorPos,
       ui.statusMessage,
+      ui.notification,
+      ui.showNotification,
+      ui.island,
+      ui.showIsland,
     ],
   );
 
@@ -296,6 +370,15 @@ export default function App() {
       pause: debugger_.pause,
       toggleBreakpoint: debugger_.toggleBreakpoint,
       evaluate: debugger_.evaluate,
+      clearOutput: debugger_.clearOutput,
+      runState: runnerState.running ? ("running" as const) : ("idle" as const),
+      runOutput: runnerState.output,
+      runError: runnerState.error,
+      runInputAvailable: runnerState.inputAvailable,
+      run: runnerState.run,
+      stopRun: runnerState.stop,
+      clearRunOutput: runnerState.clearOutput,
+      sendRunInput: runnerState.sendInput,
     }),
     [
       debugger_.state,
@@ -306,6 +389,10 @@ export default function App() {
       debugger_.pausedLine,
       debugger_.output,
       debugger_.error,
+      runnerState.running,
+      runnerState.output,
+      runnerState.error,
+      runnerState.inputAvailable,
     ],
   );
 

@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { getTerminalColors } from '../../../themes';
 import { useWorkspaceCtx } from '../../../contexts/WorkspaceContext';
 import { useSettingsCtx } from '../../../contexts/SettingsContext';

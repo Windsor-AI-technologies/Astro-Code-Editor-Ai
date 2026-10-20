@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Search, Terminal } from "lucide-react";
@@ -43,8 +49,25 @@ export default function EditorCommandPalette({
 
   // Obtener todas las acciones del editor al abrir
   useEffect(() => {
-    if (!visible || !editorRef.current) return;
+    if (!visible) return;
+
+    // Agregar acciones del Action Registry (core + extensiones)
+    const registryActions = getAllActions().map(a => ({
+      id: a.id,
+      label: `${a.category ? a.category + ': ' : ''}${a.title}`,
+      keybinding: a.shortcut,
+    }));
+
     const editor = editorRef.current;
+    if (!editor) {
+      // Sin editor abierto: solo se muestran los comandos del registry
+      setActions(registryActions);
+      setSearch("");
+      setSelectedIndex(0);
+      setTimeout(() => inputRef.current?.focus(), 50);
+      return;
+    }
+
     const editorActions = editor.getSupportedActions().map((a) => ({
       id: a.id,
       label: a.label || a.id,
@@ -140,13 +163,6 @@ export default function EditorCommandPalette({
       ...customActions,
       ...editorActions.filter((a) => !customIds.has(a.id) && a.label !== a.id),
     ];
-
-    // Agregar acciones del Action Registry (core + extensiones)
-    const registryActions = getAllActions().map(a => ({
-      id: a.id,
-      label: `${a.category ? a.category + ': ' : ''}${a.title}`,
-      keybinding: a.shortcut,
-    }));
 
     const allIds = new Set(merged.map(a => a.id));
     const final = [

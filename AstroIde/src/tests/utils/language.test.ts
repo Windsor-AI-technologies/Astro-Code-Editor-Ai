@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { describe, it, expect } from 'vitest';
 import { getLanguageFromPath } from '../../utils/language';
 

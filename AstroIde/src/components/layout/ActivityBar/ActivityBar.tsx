@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { useState, useEffect, useRef } from "react";
 import {
   Files,
@@ -10,6 +16,8 @@ import {
   User,
   Workflow,
   ChartScatter,
+  Server,
+  Wrench,
 } from "lucide-react";
 import "./ActivityBar.css";
 import { identifyUser } from '../../../services/analytics';
@@ -27,9 +35,11 @@ const TOP_ITEMS = [
   { id: "git", icon: GitBranch, title: "Control de código fuente" },
   { id: "debug", icon: Bug, title: "Ejecutar y depurar" },
   { id: "extensions", icon: Puzzle, title: "Extensiones" },
+  { id: "toolchains", icon: Wrench, title: "Herramientas y SDK" },
   { id: "containers", icon: Cloud, title: "Contenedores" },
   { id: "flowchart", icon: Workflow, title: "Diagrama de flujo" },
   { id: "chartScatter", icon: ChartScatter, title: "Analatycs" },
+  { id: "server", icon: Server, title: "Conectar servidor" },
 ];
 
 export default function ActivityBar({
@@ -103,11 +113,11 @@ export default function ActivityBar({
             onClick={() => {
               if (item.id === "flowchart") {
                 onModeChange?.("flowchart");
-              } 
-              if(item.id === "chartScatter"){
-                onModeChange?.("chartScatter")
-              }
-              else {
+              } else if (item.id === "chartScatter") {
+                onModeChange?.("chartScatter");
+              } else if (item.id === "server") {
+                onModeChange?.("server");
+              } else {
                 onModeChange?.("ide");
               }
               onViewChange(item.id);

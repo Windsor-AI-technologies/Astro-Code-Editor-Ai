@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { useEffect, useState } from 'react';
 import { Search, Download, CheckCircle, Trash2, Loader, ToggleLeft, ToggleRight, ArrowLeft, Star } from 'lucide-react';
 import { useExtensionsCtx } from '../../../contexts/ExtensionsContext';

@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { X, Circle, Settings } from 'lucide-react';
 import type { Tab } from '../../../types';
 import './TabBar.css';

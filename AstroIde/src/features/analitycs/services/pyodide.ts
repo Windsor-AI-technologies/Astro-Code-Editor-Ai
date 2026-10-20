@@ -1,7 +1,9 @@
-// ══════════════════════════════════════════════
-// Pyodide Service — Python runtime in WebAssembly
-// ══════════════════════════════════════════════
-
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 let pyodideInstance: any = null;
 let pyodideLoading = false;
 let pyodideReady = false;

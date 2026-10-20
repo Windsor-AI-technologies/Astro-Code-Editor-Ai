@@ -1,7 +1,14 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { useState, useRef, useCallback } from 'react';
 import type * as Monaco from 'monaco-editor';
 import type { Tab } from '../../types';
 import { getLanguageFromPath } from '../../utils/language';
+import { loader } from '@monaco-editor/react';
 import * as api from '../../services/tauri';
 
 let tabIdCounter = 0;
@@ -71,6 +78,17 @@ export function useTabs(editorRef: React.MutableRefObject<Monaco.editor.IStandal
     if (activeTabId === id) {
       const next = newTabs[idx] ?? newTabs[idx - 1] ?? null;
       setActiveTabId(next?.id ?? null);
+    }
+
+    // Libera el modelo de Monaco de la pestaña cerrada (evita fugas de RAM).
+    const closedPath = tab?.path;
+    if (closedPath) {
+      window.setTimeout(async () => {
+        try {
+          const monaco = await loader.init();
+          monaco.editor.getModel(monaco.Uri.parse(closedPath))?.dispose();
+        } catch { /* Monaco aún no está listo */ }
+      }, 150);
     }
     return true;
   }, [tabs, activeTabId]);

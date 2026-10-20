@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { createContext, useContext } from 'react';
 
 export interface UIContextValue {
@@ -27,6 +33,9 @@ export interface UIContextValue {
   // Notifications
   notification: string | null;
   showNotification: (msg: string, ms?: number) => void;
+  // Dynamic island
+  island: string | null;
+  showIsland: (msg: string, ms?: number) => void;
 }
 
 export const UIContext = createContext<UIContextValue>(null!);

@@ -1,7 +1,9 @@
-// ── Global Astro API Type Declaration ─────────────────────────────────────────
-// Allows using window.astro or just `astro` from any file without imports.
-// This is the public API that extensions and developers interact with.
-
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 interface AstroCommandAPI {
   /**
    * Displays a notification toast message to the user.
@@ -119,6 +121,25 @@ interface AstroNotificationAPI {
 
   succes:(message: string) => void
 
+  /**
+   * Isla dinámica — toast con forma de píldora negra arriba al centro,
+   * estilo Dynamic Island (Xiaomi/Apple).
+   * Se expande al aparecer y se contrae al desaparecer (3s por defecto).
+   */
+  dynamic: AstroDynamicIslandAPI;
+}
+
+interface AstroDynamicIslandAPI {
+  /**
+   * Muestra un mensaje en la isla dinámica.
+   * Funciona como un toast pero renderiza en la píldora superior.
+   *
+   * @param message - El texto a mostrar en la isla.
+   *
+   * @example
+   * astro.notification.dynamic.island('Conectando al servidor...');
+   */
+  island: (message: string) => void;
 }
 
 interface AstroAPI {
@@ -139,9 +160,8 @@ interface AstroAPI {
   notification: AstroNotificationAPI;
 }
 
-declare global {
-  var astro: AstroAPI;
-  interface Window {
-    astro: AstroAPI;
-  }
+declare var astro: AstroAPI;
+
+interface Window {
+  astro: AstroAPI;
 }

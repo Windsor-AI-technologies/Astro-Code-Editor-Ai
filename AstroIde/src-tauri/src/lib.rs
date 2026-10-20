@@ -1,16 +1,19 @@
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
 use std::sync::Arc;
-use serde::{Deserialize, Serialize};
 use tauri::Manager;
 
-mod terminal;
-mod lsp;
 mod debugger;
 mod extensions;
-use terminal::TerminalState;
-use lsp::{LspState, new_lsp_state};
+mod lsp;
+mod runner;
+mod terminal;
+mod toolchains;
 use debugger::DebuggerState;
+use lsp::{new_lsp_state, LspState};
+use runner::RunnerState;
+use terminal::TerminalState;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FileEntry {
@@ -66,41 +69,55 @@ fn rename_path(old_path: String, new_path: String) -> Result<(), String> {
 #[tauri::command]
 fn move_path(source: String, dest_folder: String) -> Result<String, String> {
     let source_path = std::path::Path::new(&source);
-    let file_name = source_path.file_name()
+    let file_name = source_path
+        .file_name()
         .ok_or_else(|| "No se pudo obtener el nombre del archivo".to_string())?;
-    
+
     let dest_path = std::path::Path::new(&dest_folder).join(file_name);
-    
+
     // No mover a la misma ubicación
     if source_path == dest_path {
         return Err("Origen y destino son iguales".to_string());
     }
-    
+
     // No mover una carpeta dentro de sí misma
     if dest_path.starts_with(source_path) {
         return Err("No se puede mover una carpeta dentro de sí misma".to_string());
     }
-    
+
     // No sobreescribir si ya existe
     if dest_path.exists() {
         return Err(format!("Ya existe: {}", dest_path.display()));
     }
-    
-    fs::rename(&source, &dest_path).map_err(|e| {
-        // Si rename falla (cross-device), intentar copy + delete
-        if e.kind() == std::io::ErrorKind::Other || e.kind() == std::io::ErrorKind::PermissionDenied {
-            // Fallback: copiar y borrar
-            if source_path.is_dir() {
-                return format!("No se puede mover entre volúmenes: {}", e);
+
+    fs::rename(&source, &dest_path)
+        .map_err(|e| {
+            // Si rename falla (cross-device), intentar copy + delete
+            if e.kind() == std::io::ErrorKind::Other
+                || e.kind() == std::io::ErrorKind::PermissionDenied
+            {
+                // Fallback: copiar y borrar
+                if source_path.is_dir() {
+                    return format!("No se puede mover entre volúmenes: {}", e);
+                }
+                match fs::copy(&source, &dest_path) {
+                    Ok(_) => {
+                        let _ = fs::remove_file(&source);
+                        return "ok_fallback".to_string();
+                    }
+                    Err(e2) => return format!("Error al copiar: {}", e2),
+                }
             }
-            match fs::copy(&source, &dest_path) {
-                Ok(_) => { let _ = fs::remove_file(&source); return "ok_fallback".to_string(); }
-                Err(e2) => return format!("Error al copiar: {}", e2),
+            e.to_string()
+        })
+        .and_then(|_| Ok(dest_path.to_string_lossy().to_string()))
+        .or_else(|e| {
+            if e == "ok_fallback" {
+                Ok(dest_path.to_string_lossy().to_string())
+            } else {
+                Err(e)
             }
-        }
-        e.to_string()
-    }).and_then(|_| Ok(dest_path.to_string_lossy().to_string()))
-    .or_else(|e| if e == "ok_fallback" { Ok(dest_path.to_string_lossy().to_string()) } else { Err(e) })
+        })
 }
 
 // ── Explorador ──────────────────────────────────────────────────────────────
@@ -123,15 +140,24 @@ fn read_dir_shallow(path: &str) -> Result<Vec<FileEntry>, String> {
         let entry_path = entry.path().to_string_lossy().to_string();
 
         // Filtrar ocultos y directorios pesados
-        if name.starts_with('.') { continue; }
-        if name == "node_modules" || name == "target" || name == ".git" { continue; }
+        if name.starts_with('.') {
+            continue;
+        }
+        if name == "node_modules" || name == "target" || name == ".git" {
+            continue;
+        }
 
         let is_dir = metadata.is_dir();
         // Para directorios: children = None indica "cargable bajo demanda"
         // El frontend llamará read_dir cuando el usuario expanda la carpeta
         let children = if is_dir { Some(vec![]) } else { None };
 
-        result.push(FileEntry { name, path: entry_path, is_dir, children });
+        result.push(FileEntry {
+            name,
+            path: entry_path,
+            is_dir,
+            children,
+        });
     }
 
     result.sort_by(|a, b| match (a.is_dir, b.is_dir) {
@@ -175,16 +201,14 @@ fn get_path_sep() -> String {
 // ── Settings persistentes ───────────────────────────────────────────────────
 
 fn settings_path() -> std::path::PathBuf {
-    let mut path = dirs::config_dir()
-        .unwrap_or_else(|| std::path::PathBuf::from("."));
+    let mut path = dirs::config_dir().unwrap_or_else(|| std::path::PathBuf::from("."));
     path.push("kiro-editor");
     path.push("settings.json");
     path
 }
 
 fn workspace_path() -> std::path::PathBuf {
-    let mut path = dirs::config_dir()
-        .unwrap_or_else(|| std::path::PathBuf::from("."));
+    let mut path = dirs::config_dir().unwrap_or_else(|| std::path::PathBuf::from("."));
     path.push("kiro-editor");
     path.push("workspace.txt");
     path
@@ -233,7 +257,8 @@ fn load_settings() -> Result<String, String> {
             "workbench.acrylic": true,
             "workbench.acrylicOpacity": 0.35,
             "workbench.colorTheme": "dark"
-        }).to_string())
+        })
+        .to_string())
     }
 }
 
@@ -283,12 +308,86 @@ fn detect_project_type(path: String) -> Result<String, String> {
     Ok("echo No project detected".to_string())
 }
 
+// ── Toolchains ──────────────────────────────────────────────────────────────
+
+#[tauri::command]
+async fn toolchain_list() -> Result<Vec<toolchains::ToolchainInfo>, String> {
+    tauri::async_runtime::spawn_blocking(toolchains::list)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn toolchain_install(
+    app: tauri::AppHandle,
+    id: String,
+    state: tauri::State<'_, LspState>,
+) -> Result<(), String> {
+    if let Ok(mut manager) = state.lock() {
+        manager.stop_server("csharp");
+    }
+    tauri::async_runtime::spawn_blocking(move || toolchains::install(&app, &id))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+async fn toolchain_uninstall(id: String, state: tauri::State<'_, LspState>) -> Result<(), String> {
+    if let Ok(mut manager) = state.lock() {
+        manager.stop_server("csharp");
+    }
+    tauri::async_runtime::spawn_blocking(move || toolchains::uninstall(&id))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+async fn toolchain_set_enabled(
+    id: String,
+    enabled: bool,
+    state: tauri::State<'_, LspState>,
+) -> Result<(), String> {
+    toolchains::set_enabled(&id, enabled)?;
+    if !enabled {
+        if let Ok(mut manager) = state.lock() {
+            manager.stop_server("csharp");
+        }
+    }
+    Ok(())
+}
+
 // ── LSP Commands ────────────────────────────────────────────────────────────
 
 #[tauri::command]
-fn lsp_start(language_id: String, root_path: String, state: tauri::State<'_, LspState>) -> Result<(), String> {
-    let mut manager = state.lock().map_err(|e| e.to_string())?;
-    manager.start_server(&language_id, &root_path)
+fn lsp_start(
+    app: tauri::AppHandle,
+    language_id: String,
+    root_path: String,
+    file_path: Option<String>,
+    state: tauri::State<'_, LspState>,
+) -> Result<(), String> {
+    {
+        let manager = state.lock().map_err(|e| e.to_string())?;
+        if manager.is_running(&language_id) {
+            return Ok(());
+        }
+    }
+
+    let effective_root = lsp::resolve_root(&language_id, file_path.as_deref(), &root_path)?;
+
+    let handle = {
+        let mut manager = state.lock().map_err(|e| e.to_string())?;
+        manager.spawn_server(app, &language_id, &effective_root)?
+    };
+
+    if let Err(error) = handle.initialize(&effective_root) {
+        if let Ok(mut manager) = state.lock() {
+            manager.stop_server(&language_id);
+        }
+        return Err(error);
+    }
+
+    Ok(())
 }
 
 #[tauri::command]
@@ -306,14 +405,24 @@ fn lsp_stop_all(state: tauri::State<'_, LspState>) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn lsp_request(language_id: String, method: String, params: serde_json::Value, state: tauri::State<'_, LspState>) -> Result<serde_json::Value, String> {
-    let mut manager = state.lock().map_err(|e| e.to_string())?;
+fn lsp_request(
+    language_id: String,
+    method: String,
+    params: serde_json::Value,
+    state: tauri::State<'_, LspState>,
+) -> Result<serde_json::Value, String> {
+    let manager = state.lock().map_err(|e| e.to_string())?;
     manager.send_request(&language_id, &method, params)
 }
 
 #[tauri::command]
-fn lsp_notify(language_id: String, method: String, params: serde_json::Value, state: tauri::State<'_, LspState>) -> Result<(), String> {
-    let mut manager = state.lock().map_err(|e| e.to_string())?;
+fn lsp_notify(
+    language_id: String,
+    method: String,
+    params: serde_json::Value,
+    state: tauri::State<'_, LspState>,
+) -> Result<(), String> {
+    let manager = state.lock().map_err(|e| e.to_string())?;
     manager.send_notification(&language_id, &method, params)
 }
 
@@ -324,10 +433,28 @@ fn lsp_is_running(language_id: String, state: tauri::State<'_, LspState>) -> boo
 }
 
 #[tauri::command]
+fn lsp_server_available(language_id: String, state: tauri::State<'_, LspState>) -> bool {
+    let manager = state.lock().unwrap_or_else(|e| e.into_inner());
+    manager.server_available(&language_id)
+}
+
+#[tauri::command]
+fn lsp_capabilities(
+    language_id: String,
+    state: tauri::State<'_, LspState>,
+) -> Result<serde_json::Value, String> {
+    let manager = state.lock().map_err(|e| e.to_string())?;
+    manager.capabilities(&language_id)
+}
+
+#[tauri::command]
 fn lsp_language_for_file(file_path: String, state: tauri::State<'_, LspState>) -> Option<String> {
     let manager = state.lock().unwrap_or_else(|e| e.into_inner());
-    let ext = file_path.rsplit('.').next().unwrap_or("");
-    manager.language_for_extension(ext)
+    let ext = file_path
+        .rsplit_once('.')
+        .map(|(_, extension)| extension.to_lowercase())
+        .unwrap_or_default();
+    manager.language_for_extension(&ext)
 }
 
 // ── Setup con vibrancy ──────────────────────────────────────────────────────
@@ -340,6 +467,7 @@ pub fn run() {
         .manage(Arc::new(TerminalState::new()))
         .manage(new_lsp_state())
         .manage(Arc::new(DebuggerState::new()))
+        .manage(Arc::new(RunnerState::new()))
         .setup(|app| {
             let win = app.get_webview_window("main").unwrap();
 
@@ -383,6 +511,8 @@ pub fn run() {
             lsp_request,
             lsp_notify,
             lsp_is_running,
+            lsp_server_available,
+            lsp_capabilities,
             lsp_language_for_file,
             terminal::spawn_terminal,
             terminal::write_terminal,
@@ -390,6 +520,7 @@ pub fn run() {
             terminal::kill_terminal,
             terminal::kill_all_terminals,
             debugger::debug_start,
+            debugger::debug_launch,
             debugger::debug_stop,
             debugger::debug_set_breakpoint,
             debugger::debug_remove_breakpoint,
@@ -400,6 +531,20 @@ pub fn run() {
             debugger::debug_pause,
             debugger::debug_evaluate,
             debugger::debug_get_properties,
+            runner::runner_info,
+            runner::run_file,
+            runner::run_stop,
+            runner::run_stdin,
+            runner::run_remote,
+            runner::dotnet_info,
+            runner::dotnet_list_templates,
+            runner::dotnet_new,
+            runner::dotnet_run_action,
+            runner::install_csharp_ls,
+            toolchain_list,
+            toolchain_install,
+            toolchain_uninstall,
+            toolchain_set_enabled,
             extensions::ext_search,
             extensions::ext_get_details,
             extensions::ext_install,
@@ -432,14 +577,23 @@ fn ai_chat(url: String, body: String, auth_header: String) -> Result<String, Str
     response.into_string().map_err(|e| e.to_string())
 }
 
-/// Open a URL in the default browser
+/// Open a URL in the default browser (cross-platform)
 #[tauri::command]
 fn perl_open_url(url: String) -> Result<(), String> {
-    std::process::Command::new("cmd")
+    #[cfg(target_os = "windows")]
+    let result = std::process::Command::new("cmd")
         .args(["/C", "start", "", &url])
-        .spawn()
-        .map_err(|e| format!("Failed to open URL: {}", e))?;
-    Ok(())
+        .spawn();
+
+    #[cfg(target_os = "macos")]
+    let result = std::process::Command::new("open").arg(&url).spawn();
+
+    #[cfg(all(unix, not(target_os = "macos")))]
+    let result = std::process::Command::new("xdg-open").arg(&url).spawn();
+
+    result
+        .map(|_| ())
+        .map_err(|e| format!("Failed to open URL: {}", e))
 }
 
 /// Open an application by name — searches Start Menu shortcuts, registry, and PATH
@@ -449,9 +603,11 @@ fn perl_open_app(app_name: String) -> Result<String, String> {
 
     // 1. Search Start Menu shortcuts (.lnk files) — this finds ANY installed app
     let search_dirs = vec![
-        std::env::var("ProgramData").unwrap_or_default() + r"\Microsoft\Windows\Start Menu\Programs",
+        std::env::var("ProgramData").unwrap_or_default()
+            + r"\Microsoft\Windows\Start Menu\Programs",
         std::env::var("APPDATA").unwrap_or_default() + r"\Microsoft\Windows\Start Menu\Programs",
-        std::env::var("LOCALAPPDATA").unwrap_or_default() + r"\Microsoft\Windows\Start Menu\Programs",
+        std::env::var("LOCALAPPDATA").unwrap_or_default()
+            + r"\Microsoft\Windows\Start Menu\Programs",
     ];
 
     for dir in &search_dirs {
@@ -490,20 +646,27 @@ fn perl_open_app(app_name: String) -> Result<String, String> {
 
     match result {
         Ok(_) => Ok(format!("Abriendo {}", app_name)),
-        Err(e) => Err(format!("No encontré '{}' en tu computadora: {}", app_name, e)),
+        Err(e) => Err(format!(
+            "No encontré '{}' en tu computadora: {}",
+            app_name, e
+        )),
     }
 }
 
 /// Recursively search for a .lnk shortcut matching the app name
 fn search_shortcut_recursive(dir: &str, name: &str) -> Result<String, ()> {
     let path = std::path::Path::new(dir);
-    if !path.exists() { return Err(()); }
+    if !path.exists() {
+        return Err(());
+    }
 
     if let Ok(entries) = std::fs::read_dir(path) {
         for entry in entries.flatten() {
             let entry_path = entry.path();
             if entry_path.is_dir() {
-                if let Ok(found) = search_shortcut_recursive(entry_path.to_str().unwrap_or(""), name) {
+                if let Ok(found) =
+                    search_shortcut_recursive(entry_path.to_str().unwrap_or(""), name)
+                {
                     return Ok(found);
                 }
             } else if let Some(file_name) = entry_path.file_stem() {
@@ -520,8 +683,8 @@ fn search_shortcut_recursive(dir: &str, name: &str) -> Result<String, ()> {
 /// Text-to-Speech using edge-tts (Microsoft Edge voices, free, high quality)
 #[tauri::command]
 fn perl_tts(text: String) -> Result<String, String> {
-    use std::process::Command;
     use std::io::Read;
+    use std::process::Command;
 
     let temp_dir = std::env::temp_dir();
     let output_file = temp_dir.join("perl_tts_output.mp3");
@@ -530,20 +693,26 @@ fn perl_tts(text: String) -> Result<String, String> {
     // Run edge-tts to generate mp3
     let status = Command::new("edge-tts")
         .args([
-            "--voice", "es-MX-DaliaNeural",
-            "--text", &text,
-            "--write-media", &output_path,
+            "--voice",
+            "es-MX-DaliaNeural",
+            "--text",
+            &text,
+            "--write-media",
+            &output_path,
         ])
         .output()
         .map_err(|e| format!("edge-tts not found: {}", e))?;
 
     if !status.status.success() {
-        return Err(format!("edge-tts failed: {}", String::from_utf8_lossy(&status.stderr)));
+        return Err(format!(
+            "edge-tts failed: {}",
+            String::from_utf8_lossy(&status.stderr)
+        ));
     }
 
     // Read the file and encode as base64
-    let mut file = std::fs::File::open(&output_file)
-        .map_err(|e| format!("Cannot read audio: {}", e))?;
+    let mut file =
+        std::fs::File::open(&output_file).map_err(|e| format!("Cannot read audio: {}", e))?;
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer)
         .map_err(|e| format!("Read error: {}", e))?;
@@ -566,22 +735,26 @@ fn base64_encode(input: &[u8]) -> String {
         let triple = (b0 << 16) | (b1 << 8) | b2;
         result.push(TABLE[((triple >> 18) & 0x3F) as usize] as char);
         result.push(TABLE[((triple >> 12) & 0x3F) as usize] as char);
-        if chunk.len() > 1 { result.push(TABLE[((triple >> 6) & 0x3F) as usize] as char); } else { result.push('='); }
-        if chunk.len() > 2 { result.push(TABLE[(triple & 0x3F) as usize] as char); } else { result.push('='); }
+        if chunk.len() > 1 {
+            result.push(TABLE[((triple >> 6) & 0x3F) as usize] as char);
+        } else {
+            result.push('=');
+        }
+        if chunk.len() > 2 {
+            result.push(TABLE[(triple & 0x3F) as usize] as char);
+        } else {
+            result.push('=');
+        }
     }
     result
 }
 
-/// Run a web search — opens default browser with Google search
+/// Run a web search — opens default browser with Google search (cross-platform)
 #[tauri::command]
 fn perl_web_search(query: String) -> Result<(), String> {
     let encoded = urlencoding::encode(&query);
     let url = format!("https://www.google.com/search?q={}", encoded);
-    std::process::Command::new("cmd")
-        .args(["/C", "start", "", &url])
-        .spawn()
-        .map_err(|e| format!("Failed to search: {}", e))?;
-    Ok(())
+    perl_open_url(url)
 }
 
 /// Whisper transcription — receives audio as base64, sends multipart to Groq
@@ -589,8 +762,8 @@ fn perl_web_search(query: String) -> Result<(), String> {
 fn whisper_transcribe(audio_base64: String, api_key: String) -> Result<String, String> {
     use std::io::Read;
 
-    let audio_bytes = base64_decode(&audio_base64)
-        .map_err(|e| format!("Base64 decode error: {}", e))?;
+    let audio_bytes =
+        base64_decode(&audio_base64).map_err(|e| format!("Base64 decode error: {}", e))?;
 
     // Build multipart form data manually for ureq
     let boundary = "----PerlAudioBoundary9876543210";
@@ -598,7 +771,9 @@ fn whisper_transcribe(audio_base64: String, api_key: String) -> Result<String, S
 
     // File field
     body.extend_from_slice(format!("--{}\r\n", boundary).as_bytes());
-    body.extend_from_slice(b"Content-Disposition: form-data; name=\"file\"; filename=\"audio.webm\"\r\n");
+    body.extend_from_slice(
+        b"Content-Disposition: form-data; name=\"file\"; filename=\"audio.webm\"\r\n",
+    );
     body.extend_from_slice(b"Content-Type: audio/webm\r\n\r\n");
     body.extend_from_slice(&audio_bytes);
     body.extend_from_slice(b"\r\n");
@@ -625,7 +800,10 @@ fn whisper_transcribe(audio_base64: String, api_key: String) -> Result<String, S
         .map_err(|e| format!("Whisper API error: {}", e))?;
 
     let mut result = String::new();
-    response.into_reader().read_to_string(&mut result).map_err(|e| e.to_string())?;
+    response
+        .into_reader()
+        .read_to_string(&mut result)
+        .map_err(|e| e.to_string())?;
 
     // Parse JSON to extract text
     if let Some(start) = result.find("\"text\"") {
@@ -645,15 +823,17 @@ fn whisper_transcribe(audio_base64: String, api_key: String) -> Result<String, S
 
 fn base64_decode(input: &str) -> Result<Vec<u8>, String> {
     // Simple base64 decoder
-    let table: Vec<u8> = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-        .to_vec();
+    let table: Vec<u8> =
+        b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".to_vec();
     let input = input.replace('\n', "").replace('\r', "");
     let mut output = Vec::new();
     let mut buf: u32 = 0;
     let mut bits: u32 = 0;
 
     for c in input.bytes() {
-        if c == b'=' { break; }
+        if c == b'=' {
+            break;
+        }
         let val = match table.iter().position(|&x| x == c) {
             Some(v) => v as u32,
             None => continue,
@@ -673,8 +853,8 @@ fn base64_decode(input: &str) -> Result<Vec<u8>, String> {
 
 #[tauri::command]
 async fn open_supabase_webview(app: tauri::AppHandle) -> Result<(), String> {
-    use tauri::WebviewWindowBuilder;
     use tauri::WebviewUrl;
+    use tauri::WebviewWindowBuilder;
 
     // Check if already exists
     if app.get_webview_window("supabase").is_some() {

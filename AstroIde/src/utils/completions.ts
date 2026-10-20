@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import type * as Monaco from 'monaco-editor';
 
 // Track disposables to prevent cumulative registration (memory leak)
@@ -333,7 +339,7 @@ export function registerCompletionProviders(monaco: any) {
   registerProvider(monaco, ['rust'], rustSnippets);
   registerProvider(monaco, ['go'], goSnippets);
   registerProvider(monaco, ['java'], javaSnippets);
-  registerProvider(monaco, ['c', 'cpp', 'csharp'], cppSnippets);
+  registerProvider(monaco, ['c', 'cpp'], cppSnippets);
   registerProvider(monaco, ['php'], phpSnippets);
   registerProvider(monaco, ['ruby'], rubySnippets);
   registerProvider(monaco, ['sql', 'mysql', 'pgsql'], sqlSnippets);
@@ -483,33 +489,6 @@ export function registerLanguageKeywords(monaco: any) {
     'unwrap_or', 'unwrap_or_else', 'map', 'and_then', 'or_else',
     'is_some', 'is_none', 'is_ok', 'is_err', 'iter', 'into_iter',
     'collect', 'filter', 'map', 'fold', 'for_each',
-  ]);
-
-  // C#
-  registerKeywords(monaco, ['csharp'], [
-    'abstract', 'as', 'base', 'bool', 'break', 'byte', 'case', 'catch',
-    'char', 'checked', 'class', 'const', 'continue', 'decimal', 'default',
-    'delegate', 'do', 'double', 'else', 'enum', 'event', 'explicit',
-    'extern', 'false', 'finally', 'fixed', 'float', 'for', 'foreach',
-    'goto', 'if', 'implicit', 'in', 'int', 'interface', 'internal',
-    'is', 'lock', 'long', 'namespace', 'new', 'null', 'object',
-    'operator', 'out', 'override', 'params', 'private', 'protected',
-    'public', 'readonly', 'ref', 'return', 'sbyte', 'sealed', 'short',
-    'sizeof', 'static', 'string', 'struct', 'switch', 'this', 'throw',
-    'true', 'try', 'typeof', 'uint', 'ulong', 'unchecked', 'unsafe',
-    'ushort', 'using', 'var', 'virtual', 'void', 'volatile', 'while',
-    'async', 'await', 'yield', 'record', 'init', 'required', 'global',
-  ], [
-    'Console', 'Math', 'String', 'Int32', 'Int64', 'Double', 'Boolean',
-    'List', 'Dictionary', 'HashSet', 'Queue', 'Stack', 'Array',
-    'Task', 'Func', 'Action', 'IEnumerable', 'IDisposable',
-    'Exception', 'ArgumentException', 'NullReferenceException',
-    'InvalidOperationException', 'NotImplementedException',
-    'WriteLine', 'ReadLine', 'ToString', 'Parse', 'TryParse',
-    'Add', 'Remove', 'Contains', 'Count', 'Length', 'Where',
-    'Select', 'FirstOrDefault', 'Any', 'All', 'OrderBy', 'GroupBy',
-    'ToList', 'ToArray', 'ToDictionary',
-    'Enumerable', 'Linq', 'Threading', 'Tasks', 'Collections', 'Generic',
   ]);
 
   // Go

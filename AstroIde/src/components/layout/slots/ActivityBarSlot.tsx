@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { useUICtx } from '../../../contexts/UIContext';
 import { useSettingsCtx } from '../../../contexts/SettingsContext';
 import ActivityBar from '../ActivityBar/ActivityBar';

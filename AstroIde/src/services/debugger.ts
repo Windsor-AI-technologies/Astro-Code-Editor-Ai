@@ -1,3 +1,9 @@
+/*
+##################################################################
+                  Copyright (c) 2026 Windsor
+                      Astro Code Editor
+##################################################################
+*/
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import type { UnlistenFn } from '@tauri-apps/api/event';
@@ -44,6 +50,11 @@ export type DebugState = 'idle' | 'running' | 'paused' | 'stopped';
 /** Start debug session: spawns node --inspect-brk and connects CDP */
 export async function start(file: string, cwd: string): Promise<void> {
   return invoke('debug_start', { file, cwd });
+}
+
+/** Launch execution after breakpoints have been applied */
+export async function launch(): Promise<void> {
+  return invoke('debug_launch');
 }
 
 /** Stop debug session */
@@ -153,4 +164,30 @@ function formatValue(val: any): string {
   if (!val) return 'undefined';
   const formatter = VALUE_FORMATTERS[val.type];
   return formatter ? formatter(val) : (val.description ?? String(val.value ?? val.type));
+}
+
+/**
+ * Convierte una URL `file://` de CDP en ruta local.
+ * Soporta Linux/macOS (file:///home/...) y Windows (file:///C:/...).
+ */
+export function urlToPath(url: string): string {
+  if (!url) return '';
+
+  let path = url;
+  if (path.startsWith('file://')) path = path.slice('file://'.length);
+
+  try {
+    path = decodeURIComponent(path);
+  } catch {
+    // URL mal codificada: se usa tal cual
+  }
+
+  // Windows: /C:/Users/... → C:/Users/...
+  if (/^\/[A-Za-z]:\//.test(path)) path = path.slice(1);
+
+  // Normalizar separadores según la plataforma del navegador
+  const isWindows = navigator.userAgent.includes('Windows');
+  if (isWindows) path = path.replace(/\//g, '\\');
+
+  return path;
 }
